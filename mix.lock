@@ -1,0 +1,3 @@
+%{
+  "protox": {:hex, :protox, "2.0.4", "2a86ae3699696c5d92e15804968ce6a6827a8d9516d0bbabcf16584dec710ae1", [:mix], [], "hexpm", "8ac5a03bb84da4c75d76dc29cd46008081c2068ad0f6f0da4c051093d6e24c01"},
+}
