@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-package livekit_protocol_ex.pb;
+package livekit_protocol_ex;
 option go_package = "github.com/livekit/protocol/livekit";
 option csharp_namespace = "LiveKit.Proto";
 option ruby_package = "LiveKit::Proto";
@@ -179,7 +179,7 @@ message StartSession {
   optional bool subscriber_allow_pause = 18;
   bool disable_ice_lite = 19;
   CreateRoomRequest create_room = 20;
-  repeated livekit.AddTrackRequest add_track_requests = 21;
+  repeated livekit_protocol_ex.AddTrackRequest add_track_requests = 21;
   SessionDescription publisher_offer = 22;
   SyncState sync_state = 23;
   bool use_single_peer_connection = 24;

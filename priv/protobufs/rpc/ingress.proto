@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-package rpc;
+package livekit_protocol_ex.rpc;
 
 option go_package = "github.com/livekit/protocol/rpc";
 
@@ -23,17 +23,17 @@ import "livekit_ingress.proto";
 import "google/protobuf/empty.proto";
 
 service IngressInternal {
-  rpc StartIngress(StartIngressRequest) returns (livekit.IngressInfo) {
-    option (psrpc.options).affinity_func = true;
+  rpc StartIngress(StartIngressRequest) returns (livekit_protocol_ex.IngressInfo) {
+    option (livekit_protocol_ex.psrpc.options).affinity_func = true;
   };
 
   rpc ListActiveIngress(ListActiveIngressRequest) returns (ListActiveIngressResponse) {
-    option (psrpc.options).multi = true;
-    option (psrpc.options).topics = true;
+    option (livekit_protocol_ex.psrpc.options).multi = true;
+    option (livekit_protocol_ex.psrpc.options).topics = true;
   };
 
   rpc KillIngressSession(KillIngressSessionRequest) returns (google.protobuf.Empty) {
-    option (psrpc.options) = {
+    option (livekit_protocol_ex.psrpc.options) = {
       topics: true
       topic_params: {
         names: ["ingress_id", "resource_id"]
@@ -44,20 +44,20 @@ service IngressInternal {
 }
 
 service IngressHandler {
-  rpc UpdateIngress(livekit.UpdateIngressRequest) returns (livekit.IngressState) {
-    option (psrpc.options).topics = true;
+  rpc UpdateIngress(livekit_protocol_ex.UpdateIngressRequest) returns (livekit_protocol_ex.IngressState) {
+    option (livekit_protocol_ex.psrpc.options).topics = true;
   };
-  rpc DeleteIngress(livekit.DeleteIngressRequest) returns (livekit.IngressState) {
-    option (psrpc.options).topics = true;
+  rpc DeleteIngress(livekit_protocol_ex.DeleteIngressRequest) returns (livekit_protocol_ex.IngressState) {
+    option (livekit_protocol_ex.psrpc.options).topics = true;
   };
   rpc DeleteWHIPResource(DeleteWHIPResourceRequest) returns (google.protobuf.Empty) {
-    option (psrpc.options).topics = true;
+    option (livekit_protocol_ex.psrpc.options).topics = true;
   };
   rpc ICERestartWHIPResource(ICERestartWHIPResourceRequest) returns (ICERestartWHIPResourceResponse) {
-    option (psrpc.options).topics = true;
+    option (livekit_protocol_ex.psrpc.options).topics = true;
   };
   rpc WHIPRTCConnectionNotify(WHIPRTCConnectionNotifyRequest) returns (google.protobuf.Empty) {
-    option (psrpc.options) = {
+    option (livekit_protocol_ex.psrpc.options) = {
       topics: true
       topic_params: {
         single_server: true;
@@ -96,12 +96,12 @@ message ICERestartWHIPResourceResponse {
 message WHIPRTCConnectionNotifyRequest {
   string participant_id = 1;
   bool closed = 2;
-  livekit.InputVideoState video = 3;
-  livekit.InputAudioState audio = 4;
+  livekit_protocol_ex.InputVideoState video = 3;
+  livekit_protocol_ex.InputAudioState audio = 4;
 }
 
 message StartIngressRequest {
-  livekit.IngressInfo info = 1;
+  livekit_protocol_ex.IngressInfo info = 1;
   string token = 2;
   string ws_url = 3;
   map<string, string> logging_fields = 4;

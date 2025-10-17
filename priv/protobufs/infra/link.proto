@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-package rpc;
+package livekit_protocol_ex.rpc;
 
 import "google/protobuf/timestamp.proto";
 

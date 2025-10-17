@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-package rpc;
+package livekit_protocol_ex.rpc;
 
 option go_package = "github.com/livekit/protocol/rpc";
 
@@ -22,8 +22,8 @@ import "options.proto";
 import "livekit_agent_dispatch.proto";
 
 service AgentDispatchInternal {
-  rpc CreateDispatch(livekit.AgentDispatch) returns (livekit.AgentDispatch) {
-    option (psrpc.options) = {
+  rpc CreateDispatch(livekit_protocol_ex.AgentDispatch) returns (livekit_protocol_ex.AgentDispatch) {
+    option (livekit_protocol_ex.psrpc.options) = {
       topics: true
       topic_params: {
         group: "room"
@@ -33,8 +33,8 @@ service AgentDispatchInternal {
     };
   };
 
-  rpc DeleteDispatch(livekit.DeleteAgentDispatchRequest) returns (livekit.AgentDispatch) {
-    option (psrpc.options) = {
+  rpc DeleteDispatch(livekit_protocol_ex.DeleteAgentDispatchRequest) returns (livekit_protocol_ex.AgentDispatch) {
+    option (livekit_protocol_ex.psrpc.options) = {
       topics: true
       topic_params: {
         group: "room"
@@ -44,8 +44,8 @@ service AgentDispatchInternal {
     };
   };
 
-  rpc ListDispatch(livekit.ListAgentDispatchRequest) returns (livekit.ListAgentDispatchResponse) {
-    option (psrpc.options) = {
+  rpc ListDispatch(livekit_protocol_ex.ListAgentDispatchRequest) returns (livekit_protocol_ex.ListAgentDispatchResponse) {
+    option (livekit_protocol_ex.psrpc.options) = {
       topics: true
       topic_params: {
         group: "room"

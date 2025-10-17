@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-package livekit_protocol_ex.pb;
+package livekit_protocol_ex;
 option go_package = "github.com/livekit/protocol/livekit";
 option csharp_namespace = "LiveKit.Proto";
 option ruby_package = "LiveKit::Proto";
@@ -39,7 +39,7 @@ message TokenSourceRequest {
 
   // A RoomConfiguration object can be passed to request extra parameters should be included when
   // generating connection credentials - dispatching agents, defining egress settings, etc
-  // More info: https://docs.livekit.io/home/get-started/authentication/#room-configuration
+  // More info: https://docs.livekit_protocol_ex.io/home/get-started/authentication/#room-configuration
   optional RoomConfiguration room_config = 6;
 }
 

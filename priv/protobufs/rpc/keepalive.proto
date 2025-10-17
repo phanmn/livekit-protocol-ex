@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-package rpc;
+package livekit_protocol_ex.rpc;
 
 option go_package = "github.com/livekit/protocol/rpc";
 
@@ -22,7 +22,7 @@ import "options.proto";
 
 service Keepalive {
   rpc Ping(KeepalivePing) returns (KeepalivePing) {
-    option (psrpc.options) = {
+    option (livekit_protocol_ex.psrpc.options) = {
       subscription: true
       multi: true
       topics: true

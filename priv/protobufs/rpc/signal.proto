@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-package rpc;
+package livekit_protocol_ex.rpc;
 
 option go_package = "github.com/livekit/protocol/rpc";
 
@@ -24,7 +24,7 @@ import "livekit_rtc.proto";
 
 service Signal {
   rpc RelaySignal(rpc.RelaySignalRequest) returns (rpc.RelaySignalResponse) {
-    option (psrpc.options) = {
+    option (livekit_protocol_ex.psrpc.options) = {
       stream: true
       topics: true
       topic_params: {
@@ -38,14 +38,14 @@ service Signal {
 }
 
 message RelaySignalRequest {
-  livekit.StartSession start_session = 1;
-  repeated livekit.SignalRequest requests = 3;
+  livekit_protocol_ex.StartSession start_session = 1;
+  repeated livekit_protocol_ex.SignalRequest requests = 3;
   uint64 seq = 4;
   bool close = 5;
 }
 
 message RelaySignalResponse {
-  repeated livekit.SignalResponse responses = 2;
+  repeated livekit_protocol_ex.SignalResponse responses = 2;
   uint64 seq = 3;
   bool close = 4;
 }

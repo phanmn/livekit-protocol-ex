@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package livekit_protocol_ex.pb.agent;
+package livekit_protocol_ex.agent;
 
 option go_package = "github.com/livekit/protocol/livekit/agent";
 

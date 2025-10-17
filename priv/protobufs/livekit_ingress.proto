@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-package livekit_protocol_ex.pb;
+package livekit_protocol_ex;
 
 import "livekit_models.proto";
 

@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-package rpc;
+package livekit_protocol_ex.rpc;
 
 option go_package = "github.com/livekit/protocol/rpc";
 
@@ -24,10 +24,10 @@ import "livekit_agent.proto";
 
 service AgentInternal {
   rpc CheckEnabled(CheckEnabledRequest) returns (CheckEnabledResponse) {
-    option (psrpc.options).multi = true;
+    option (livekit_protocol_ex.psrpc.options).multi = true;
   };
-  rpc JobRequest(livekit.Job) returns (JobRequestResponse) {
-    option (psrpc.options) = {
+  rpc JobRequest(livekit_protocol_ex.Job) returns (JobRequestResponse) {
+    option (livekit_protocol_ex.psrpc.options) = {
       affinity_func: true
       topics: true
       topic_params: {
@@ -37,7 +37,7 @@ service AgentInternal {
     };
   };
   rpc JobTerminate(JobTerminateRequest) returns (JobTerminateResponse) {
-    option (psrpc.options) = {
+    option (livekit_protocol_ex.psrpc.options) = {
       topics: true
       topic_params: {
         names: ["job_id"]
@@ -46,7 +46,7 @@ service AgentInternal {
     };
   }
   rpc WorkerRegistered(google.protobuf.Empty) returns (google.protobuf.Empty) {
-    option (psrpc.options) = {
+    option (livekit_protocol_ex.psrpc.options) = {
       subscription: true
       multi: true
       topics: true
@@ -76,7 +76,7 @@ message CheckEnabledResponse {
 }
 
 message JobRequestResponse {
-  livekit.JobState state = 1;
+  livekit_protocol_ex.JobState state = 1;
 }
 
 message JobTerminateRequest {
@@ -85,6 +85,6 @@ message JobTerminateRequest {
 }
 
 message JobTerminateResponse {
-  livekit.JobState state = 1;
+  livekit_protocol_ex.JobState state = 1;
 }
 

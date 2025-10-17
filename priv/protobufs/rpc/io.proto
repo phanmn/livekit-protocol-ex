@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-package rpc;
+package livekit_protocol_ex.rpc;
 
 option go_package = "github.com/livekit/protocol/rpc";
 
@@ -27,14 +27,14 @@ import "google/protobuf/duration.proto";
 
 service IOInfo {
   // egress
-  rpc CreateEgress(livekit.EgressInfo) returns (google.protobuf.Empty);
-  rpc UpdateEgress(livekit.EgressInfo) returns (google.protobuf.Empty);
-  rpc GetEgress(GetEgressRequest) returns (livekit.EgressInfo);
-  rpc ListEgress(livekit.ListEgressRequest) returns (livekit.ListEgressResponse);
+  rpc CreateEgress(livekit_protocol_ex.EgressInfo) returns (google.protobuf.Empty);
+  rpc UpdateEgress(livekit_protocol_ex.EgressInfo) returns (google.protobuf.Empty);
+  rpc GetEgress(GetEgressRequest) returns (livekit_protocol_ex.EgressInfo);
+  rpc ListEgress(livekit_protocol_ex.ListEgressRequest) returns (livekit_protocol_ex.ListEgressResponse);
   rpc UpdateMetrics(UpdateMetricsRequest) returns (google.protobuf.Empty);
 
   // ingress
-  rpc CreateIngress(livekit.IngressInfo) returns (google.protobuf.Empty);
+  rpc CreateIngress(livekit_protocol_ex.IngressInfo) returns (google.protobuf.Empty);
   rpc GetIngressInfo(GetIngressInfoRequest) returns (GetIngressInfoResponse);
   rpc UpdateIngressState(UpdateIngressStateRequest) returns (google.protobuf.Empty);
 
@@ -50,7 +50,7 @@ message GetEgressRequest {
 }
 
 message UpdateMetricsRequest {
-  livekit.EgressInfo info = 1;
+  livekit_protocol_ex.EgressInfo info = 1;
   float avg_cpu_usage = 3;
   float max_cpu_usage = 4;
 }
@@ -62,7 +62,7 @@ message GetIngressInfoRequest {
 }
 
 message GetIngressInfoResponse {
-  livekit.IngressInfo info = 1;
+  livekit_protocol_ex.IngressInfo info = 1;
   string token = 2;
   string ws_url = 3;
   map<string, string> logging_fields = 4;
@@ -72,7 +72,7 @@ message GetIngressInfoResponse {
 // Request to store an update to the ingress state ingress -> service
 message UpdateIngressStateRequest {
   string ingress_id = 1;
-  livekit.IngressState state = 2;
+  livekit_protocol_ex.IngressState state = 2;
 }
 
 message GetSIPTrunkAuthenticationRequest {
@@ -105,7 +105,7 @@ message GetSIPTrunkAuthenticationResponse {
   string sip_trunk_id = 4;
   // Used in Cloud only
   string project_id = 5;
-  livekit.ProviderInfo provider_info = 6;
+  livekit_protocol_ex.ProviderInfo provider_info = 6;
 }
 
 message EvaluateSIPDispatchRulesRequest {
@@ -190,9 +190,9 @@ message EvaluateSIPDispatchRulesResponse {
   //
   // When mapping INVITE headers to response headers with attributes_to_headers map,
   // lowercase header names should be used, for example: sip.h.x-custom-header.
-  livekit.SIPHeaderOptions include_headers = 19;
+  livekit_protocol_ex.SIPHeaderOptions include_headers = 19;
 
-  repeated livekit.SIPFeature enabled_features = 15;
+  repeated livekit_protocol_ex.SIPFeature enabled_features = 15;
 
   // Max time for the caller to wait for track subscription.
   google.protobuf.Duration ringing_timeout = 16;
@@ -203,22 +203,22 @@ message EvaluateSIPDispatchRulesResponse {
   // once tokens are returned by this response consistently, it will no longer
   // be needed
   string room_preset = 20;
-  livekit.RoomConfiguration room_config = 21;
+  livekit_protocol_ex.RoomConfiguration room_config = 21;
 
-  livekit.SIPMediaEncryption media_encryption = 22;
+  livekit_protocol_ex.SIPMediaEncryption media_encryption = 22;
 
   // NEXT ID: 23
 }
 
 message UpdateSIPCallStateRequest {
-  livekit.SIPCallInfo call_info = 1;
-  livekit.SIPTransferInfo transfer_info = 2;
+  livekit_protocol_ex.SIPCallInfo call_info = 1;
+  livekit_protocol_ex.SIPTransferInfo transfer_info = 2;
 
    // NEXT ID: 3
 }
 
 message RecordCallContextRequest {
-  livekit.SIPCallInfo call_info = 1;
+  livekit_protocol_ex.SIPCallInfo call_info = 1;
 
   // NEXT ID: 2
 }
@@ -234,9 +234,9 @@ enum SIPDispatchResult {
 message SIPCall {
   string lk_call_id = 1;
   string source_ip = 2; // source ip (without port)
-  livekit.SIPUri address = 3; // address in the request line (INVITE)
-  livekit.SIPUri from = 4; // From header
-  livekit.SIPUri to = 5; // To header
-  repeated livekit.SIPUri via = 6; // Via headers
+  livekit_protocol_ex.SIPUri address = 3; // address in the request line (INVITE)
+  livekit_protocol_ex.SIPUri from = 4; // From header
+  livekit_protocol_ex.SIPUri to = 5; // To header
+  repeated livekit_protocol_ex.SIPUri via = 6; // Via headers
   string sip_call_id = 7; // SIP protocol generated call ID
 }

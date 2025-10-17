@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package rpc;
+package livekit_protocol_ex.rpc;
 
 option go_package = "github.com/livekit/protocol/rpc";
 
@@ -11,7 +11,7 @@ import "livekit_rtc.proto";
 
 service WHIP {
   rpc Create(WHIPCreateRequest) returns (WHIPCreateResponse) {
-    option (psrpc.options) = {
+    option (livekit_protocol_ex.psrpc.options) = {
       topics: true
       queue: true
       topic_params: {
@@ -28,7 +28,7 @@ message WHIPCreateRequest {
     repeated string track_names = 1;
   }
 
-  livekit.StartSession start_session = 1;
+  livekit_protocol_ex.StartSession start_session = 1;
   string offer_sdp = 2;
   map<string, TrackList> subscribed_participant_tracks = 3;
   bool from_ingress = 4;
@@ -37,7 +37,7 @@ message WHIPCreateRequest {
 message WHIPCreateResponse {
   string answer_sdp = 1;
   string participant_id = 2;
-  repeated livekit.ICEServer ice_servers = 3;
+  repeated livekit_protocol_ex.ICEServer ice_servers = 3;
   string ice_session_id = 4;
 }
 
@@ -45,7 +45,7 @@ message WHIPCreateResponse {
 
 service WHIPParticipant {
   rpc ICETrickle(WHIPParticipantICETrickleRequest) returns (google.protobuf.Empty) {
-    option (psrpc.options) = {
+    option (livekit_protocol_ex.psrpc.options) = {
       topics: true
       topic_params: {
         group: "common"
@@ -56,7 +56,7 @@ service WHIPParticipant {
   }
 
   rpc ICERestart(WHIPParticipantICERestartRequest) returns (WHIPParticipantICERestartResponse) {
-    option (psrpc.options) = {
+    option (livekit_protocol_ex.psrpc.options) = {
       topics: true
       topic_params: {
         group: "common"
@@ -67,7 +67,7 @@ service WHIPParticipant {
   }
 
   rpc DeleteSession(WHIPParticipantDeleteSessionRequest) returns (google.protobuf.Empty) {
-    option (psrpc.options) = {
+    option (livekit_protocol_ex.psrpc.options) = {
       topics: true
       topic_params: {
         group: "common"

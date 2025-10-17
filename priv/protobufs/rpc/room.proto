@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-package rpc;
+package livekit_protocol_ex.rpc;
 
 option go_package = "github.com/livekit/protocol/rpc";
 
@@ -23,8 +23,8 @@ import "livekit_models.proto";
 import "livekit_room.proto";
 
 service Room {
-  rpc DeleteRoom(livekit.DeleteRoomRequest) returns (livekit.DeleteRoomResponse) {
-    option (psrpc.options) = {
+  rpc DeleteRoom(livekit_protocol_ex.DeleteRoomRequest) returns (livekit_protocol_ex.DeleteRoomResponse) {
+    option (livekit_protocol_ex.psrpc.options) = {
       topics: true
       topic_params: {
         group: "room"
@@ -33,8 +33,8 @@ service Room {
       };
     };
   };
-  rpc SendData(livekit.SendDataRequest) returns (livekit.SendDataResponse) {
-    option (psrpc.options) = {
+  rpc SendData(livekit_protocol_ex.SendDataRequest) returns (livekit_protocol_ex.SendDataResponse) {
+    option (livekit_protocol_ex.psrpc.options) = {
       topics: true
       topic_params: {
         group: "room"
@@ -43,8 +43,8 @@ service Room {
       };
     };
   };
-  rpc UpdateRoomMetadata (livekit.UpdateRoomMetadataRequest) returns (livekit.Room) {
-    option (psrpc.options) = {
+  rpc UpdateRoomMetadata (livekit_protocol_ex.UpdateRoomMetadataRequest) returns (livekit_protocol_ex.Room) {
+    option (livekit_protocol_ex.psrpc.options) = {
       topics: true
       topic_params: {
         group: "room"

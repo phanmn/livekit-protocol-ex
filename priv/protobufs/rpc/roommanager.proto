@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-package rpc;
+package livekit_protocol_ex.rpc;
 
 option go_package = "github.com/livekit/protocol/rpc";
 
@@ -23,8 +23,8 @@ import "livekit_models.proto";
 import "livekit_room.proto";
 
 service RoomManager {
-  rpc CreateRoom(livekit.CreateRoomRequest) returns (livekit.Room) {
-    option (psrpc.options) = {
+  rpc CreateRoom(livekit_protocol_ex.CreateRoomRequest) returns (livekit_protocol_ex.Room) {
+    option (livekit_protocol_ex.psrpc.options) = {
       topics: true
       topic_params: {
         group: "node"

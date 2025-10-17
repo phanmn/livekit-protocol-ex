@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-package livekit_protocol_ex.pb;
+package livekit_protocol_ex;
 
 import "livekit_models.proto";
 
@@ -50,7 +50,7 @@ message RoomCompositeEgressRequest {
   bool audio_only = 3;           // (default false)
   AudioMixing audio_mixing = 15; // only applies to audio_only egress (default DEFAULT_MIXING)
   bool video_only = 4;           // (default false)
-  string custom_base_url = 5;    // template base url (default https://recorder.livekit.io)
+  string custom_base_url = 5;    // template base url (default https://recorder.livekit_protocol_ex.io)
   oneof output {                 // deprecated (use _output fields)
     EncodedFileOutput file = 6 [deprecated = true];
     StreamOutput stream = 7 [deprecated = true];

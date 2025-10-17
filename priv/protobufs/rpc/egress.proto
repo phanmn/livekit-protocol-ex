@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-package rpc;
+package livekit_protocol_ex.rpc;
 
 option go_package = "github.com/livekit/protocol/rpc";
 
@@ -22,22 +22,22 @@ import "options.proto";
 import "livekit_egress.proto";
 
 service EgressInternal {
-  rpc StartEgress(StartEgressRequest) returns (livekit.EgressInfo) {
-    option (psrpc.options).affinity_func = true;
-    option (psrpc.options).topics = true;
+  rpc StartEgress(StartEgressRequest) returns (livekit_protocol_ex.EgressInfo) {
+    option (livekit_protocol_ex.psrpc.options).affinity_func = true;
+    option (livekit_protocol_ex.psrpc.options).topics = true;
   };
   rpc ListActiveEgress(ListActiveEgressRequest) returns (ListActiveEgressResponse) {
-    option (psrpc.options).multi = true;
-    option (psrpc.options).topics = true;
+    option (livekit_protocol_ex.psrpc.options).multi = true;
+    option (livekit_protocol_ex.psrpc.options).topics = true;
   }
 }
 
 service EgressHandler {
-  rpc UpdateStream(livekit.UpdateStreamRequest) returns (livekit.EgressInfo) {
-    option (psrpc.options).topics = true;
+  rpc UpdateStream(livekit_protocol_ex.UpdateStreamRequest) returns (livekit_protocol_ex.EgressInfo) {
+    option (livekit_protocol_ex.psrpc.options).topics = true;
   }
-  rpc StopEgress(livekit.StopEgressRequest) returns (livekit.EgressInfo) {
-    option (psrpc.options).topics = true;
+  rpc StopEgress(livekit_protocol_ex.StopEgressRequest) returns (livekit_protocol_ex.EgressInfo) {
+    option (livekit_protocol_ex.psrpc.options).topics = true;
   }
 }
 
@@ -47,11 +47,11 @@ message StartEgressRequest {
 
   // request
   oneof request {
-    livekit.RoomCompositeEgressRequest room_composite = 5;
-    livekit.WebEgressRequest web = 11;
-    livekit.ParticipantEgressRequest participant = 13;
-    livekit.TrackCompositeEgressRequest track_composite = 6;
-    livekit.TrackEgressRequest track = 7;
+    livekit_protocol_ex.RoomCompositeEgressRequest room_composite = 5;
+    livekit_protocol_ex.WebEgressRequest web = 11;
+    livekit_protocol_ex.ParticipantEgressRequest participant = 13;
+    livekit_protocol_ex.TrackCompositeEgressRequest track_composite = 6;
+    livekit_protocol_ex.TrackEgressRequest track = 7;
   }
 
   // connection info

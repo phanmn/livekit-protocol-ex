@@ -14,14 +14,14 @@
 
 syntax = "proto3";
 
-package livekit_protocol_ex.pb;
+package livekit_protocol_ex.rpc;
 option go_package = "github.com/livekit/protocol/rpc";
 
 import "google/protobuf/empty.proto";
 import "livekit_analytics.proto";
 
 service AnalyticsRecorderService {
-  rpc IngestStats(stream livekit.AnalyticsStats) returns (google.protobuf.Empty){};
-  rpc IngestEvents(stream livekit.AnalyticsEvents) returns (google.protobuf.Empty){};
-  rpc IngestNodeRoomStates(stream livekit.AnalyticsNodeRooms) returns (google.protobuf.Empty){};
+  rpc IngestStats(stream livekit_protocol_ex.AnalyticsStats) returns (google.protobuf.Empty){};
+  rpc IngestEvents(stream livekit_protocol_ex.AnalyticsEvents) returns (google.protobuf.Empty){};
+  rpc IngestNodeRoomStates(stream livekit_protocol_ex.AnalyticsNodeRooms) returns (google.protobuf.Empty){};
 }
