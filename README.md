@@ -1,4 +1,4 @@
-# LivekitProtocolEx
+# LiveKitProtocolEx
 
 ```bash
 mix protox.generate --multiple-files --output-path=./lib/livekit_protocol_ex --include-path=./priv/protobufs priv/protobufs/livekit_rtc.proto priv/protobufs/livekit_agent.proto priv/protobufs/infra/link.proto priv/protobufs/rpc/agent.proto priv/protobufs/rpc/room.proto priv/protobufs/rpc/io.proto
@@ -16,7 +16,7 @@ by adding `livekit_protocol_ex` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:livekit_protocol_ex, "~> 0.1.0"}
+    {:live_kit_protocol_ex, "~> 0.1.0"}
   ]
 end
 ```

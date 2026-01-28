@@ -1,8 +1,8 @@
-defmodule LivekitProtocolExTest do
+defmodule LiveKitProtocolExTest do
   use ExUnit.Case
-  doctest LivekitProtocolEx
+  doctest LiveKitProtocolEx
 
   test "greets the world" do
-    assert LivekitProtocolEx.hello() == :world
+    assert LiveKitProtocolEx.hello() == :world
   end
 end

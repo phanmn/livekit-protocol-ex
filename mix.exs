@@ -1,9 +1,9 @@
-defmodule LivekitProtocolEx.MixProject do
+defmodule LiveKitProtocolEx.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :livekit_protocol_ex,
+      app: :live_kit_protocol_ex,
       version: "0.1.0",
       elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
