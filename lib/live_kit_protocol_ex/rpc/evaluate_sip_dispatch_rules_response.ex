@@ -9,6 +9,8 @@ defmodule LiveKitProtocolEx.Rpc.EvaluateSIPDispatchRulesResponse do
   end
 
   @type t :: %__MODULE__{
+          media: LiveKitProtocolEx.SIPMediaConfig.t() | nil,
+          feature_flags: %{String.t() => String.t()},
           media_encryption: atom(),
           room_config: LiveKitProtocolEx.RoomConfiguration.t() | nil,
           room_preset: String.t(),
@@ -33,7 +35,9 @@ defmodule LiveKitProtocolEx.Rpc.EvaluateSIPDispatchRulesResponse do
           room_name: String.t(),
           __uf__: [{non_neg_integer(), Protox.Types.tag(), binary()}]
         }
-  defstruct media_encryption: :SIP_MEDIA_ENCRYPT_DISABLE,
+  defstruct media: nil,
+            feature_flags: %{},
+            media_encryption: :SIP_MEDIA_ENCRYPT_DISABLE,
             room_config: nil,
             room_preset: "",
             include_headers: :SIP_NO_HEADERS,
@@ -69,6 +73,8 @@ defmodule LiveKitProtocolEx.Rpc.EvaluateSIPDispatchRulesResponse do
       @spec encode!(t()) :: {iodata(), non_neg_integer()} | no_return()
       def encode!(msg) do
         {_acc = [], _acc_size = 0}
+        |> encode_media(msg)
+        |> encode_feature_flags(msg)
         |> encode_media_encryption(msg)
         |> encode_room_config(msg)
         |> encode_room_preset(msg)
@@ -94,6 +100,45 @@ defmodule LiveKitProtocolEx.Rpc.EvaluateSIPDispatchRulesResponse do
         |> encode_unknown_fields(msg)
       end
     )
+
+    defp encode_media({acc, acc_size}, msg) do
+      if msg.media == nil do
+        {acc, acc_size}
+      else
+        {value_bytes, value_bytes_size} = Protox.Encode.encode_message(msg.media)
+        {["\xC2\x01", value_bytes | acc], acc_size + 2 + value_bytes_size}
+      end
+    rescue
+      ArgumentError ->
+        reraise Protox.EncodingError.new(:media, "invalid field value"), __STACKTRACE__
+    end
+
+    defp encode_feature_flags({acc, acc_size}, msg) do
+      map = Map.fetch!(msg, :feature_flags)
+
+      if map_size(map) == 0 do
+        {acc, acc_size}
+      else
+        Enum.reduce(map, {acc, acc_size}, fn {k, v}, {acc, acc_size} ->
+          {k_value_bytes, k_value_len} = Protox.Encode.encode_string(k)
+          {v_value_bytes, v_value_len} = Protox.Encode.encode_string(v)
+          len = 2 + k_value_len + v_value_len
+          {len_varint, len_varint_size} = Protox.Varint.encode(len)
+
+          acc = [
+            <<"\xBA\x01", len_varint::binary, "\n">>,
+            k_value_bytes,
+            "\x12",
+            v_value_bytes | acc
+          ]
+
+          {acc, acc_size + 4 + k_value_len + v_value_len + len_varint_size}
+        end)
+      end
+    rescue
+      ArgumentError ->
+        reraise Protox.EncodingError.new(:feature_flags, "invalid field value"), __STACKTRACE__
+    end
 
     defp encode_media_encryption({acc, acc_size}, msg) do
       if msg.media_encryption == :SIP_MEDIA_ENCRYPT_DISABLE do
@@ -502,6 +547,47 @@ defmodule LiveKitProtocolEx.Rpc.EvaluateSIPDispatchRulesResponse do
             <<0::5, _::3, _rest::binary>> ->
               raise %Protox.IllegalTagError{}
 
+            <<24::5, _wire_type::3, "\x01", bytes::binary>> ->
+              {len, bytes} = Protox.Varint.decode(bytes)
+              {delimited, rest} = Protox.Decode.parse_delimited(bytes, len)
+
+              {[
+                 media:
+                   Protox.MergeMessage.merge(
+                     msg.media,
+                     LiveKitProtocolEx.SIPMediaConfig.decode!(delimited)
+                   )
+               ], rest}
+
+            <<23::5, _wire_type::3, "\x01", bytes::binary>> ->
+              {len, bytes} = Protox.Varint.decode(bytes)
+              {delimited, rest} = Protox.Decode.parse_delimited(bytes, len)
+
+              {[
+                 (
+                   {entry_key, entry_value} =
+                     (
+                       {map_key, map_value} = parse_string_string({:unset, :unset}, delimited)
+
+                       map_key =
+                         case map_key do
+                           :unset -> Protox.Default.default(:string)
+                           _ -> map_key
+                         end
+
+                       map_value =
+                         case map_value do
+                           :unset -> Protox.Default.default(:string)
+                           _ -> map_value
+                         end
+
+                       {map_key, map_value}
+                     )
+
+                   {:feature_flags, Map.put(msg.feature_flags, entry_key, entry_value)}
+                 )
+               ], rest}
+
             <<22::5, _wire_type::3, "\x01", bytes::binary>> ->
               {value, rest} =
                 Protox.Decode.parse_enum(bytes, LiveKitProtocolEx.SIPMediaEncryption)
@@ -815,6 +901,14 @@ defmodule LiveKitProtocolEx.Rpc.EvaluateSIPDispatchRulesResponse do
     @spec default(atom()) ::
             {:ok, boolean() | integer() | String.t() | float()}
             | {:error, :no_such_field | :no_default_value}
+    def default(:media) do
+      {:ok, nil}
+    end
+
+    def default(:feature_flags) do
+      {:error, :no_default_value}
+    end
+
     def default(:media_encryption) do
       {:ok, :SIP_MEDIA_ENCRYPT_DISABLE}
     end
@@ -931,6 +1025,15 @@ defmodule LiveKitProtocolEx.Rpc.EvaluateSIPDispatchRulesResponse do
           tag: 15,
           type: {:enum, LiveKitProtocolEx.SIPFeature}
         },
+        feature_flags: %{
+          __struct__: Protox.Field,
+          extender: nil,
+          kind: :map,
+          label: nil,
+          name: :feature_flags,
+          tag: 23,
+          type: {:string, :string}
+        },
         headers: %{
           __struct__: Protox.Field,
           extender: nil,
@@ -966,6 +1069,15 @@ defmodule LiveKitProtocolEx.Rpc.EvaluateSIPDispatchRulesResponse do
           name: :max_call_duration,
           tag: 17,
           type: {:message, Google.Protobuf.Duration}
+        },
+        media: %{
+          __struct__: Protox.Field,
+          extender: nil,
+          kind: %{__struct__: Protox.Scalar, default_value: nil},
+          label: :optional,
+          name: :media,
+          tag: 24,
+          type: {:message, LiveKitProtocolEx.SIPMediaConfig}
         },
         media_encryption: %{
           __struct__: Protox.Field,

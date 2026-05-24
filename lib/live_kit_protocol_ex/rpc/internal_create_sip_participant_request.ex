@@ -9,6 +9,9 @@ defmodule LiveKitProtocolEx.Rpc.InternalCreateSIPParticipantRequest do
   end
 
   @type t :: %__MODULE__{
+          media: LiveKitProtocolEx.SIPMediaConfig.t() | nil,
+          feature_flags: %{String.t() => String.t()},
+          destination: LiveKitProtocolEx.Destination.t() | nil,
           destination_country: String.t(),
           wait_until_answered: boolean(),
           media_encryption: atom(),
@@ -41,7 +44,10 @@ defmodule LiveKitProtocolEx.Rpc.InternalCreateSIPParticipantRequest do
           display_name: String.t() | nil,
           __uf__: [{non_neg_integer(), Protox.Types.tag(), binary()}]
         }
-  defstruct display_name: nil,
+  defstruct media: nil,
+            feature_flags: %{},
+            destination: nil,
+            display_name: nil,
             destination_country: "",
             wait_until_answered: false,
             media_encryption: :SIP_MEDIA_ENCRYPT_DISABLE,
@@ -86,6 +92,9 @@ defmodule LiveKitProtocolEx.Rpc.InternalCreateSIPParticipantRequest do
       def encode!(msg) do
         {_acc = [], _acc_size = 0}
         |> encode_display_name(msg)
+        |> encode_media(msg)
+        |> encode_feature_flags(msg)
+        |> encode_destination(msg)
         |> encode_destination_country(msg)
         |> encode_wait_until_answered(msg)
         |> encode_media_encryption(msg)
@@ -118,6 +127,57 @@ defmodule LiveKitProtocolEx.Rpc.InternalCreateSIPParticipantRequest do
         |> encode_unknown_fields(msg)
       end
     )
+
+    defp encode_media({acc, acc_size}, msg) do
+      if msg.media == nil do
+        {acc, acc_size}
+      else
+        {value_bytes, value_bytes_size} = Protox.Encode.encode_message(msg.media)
+        {["\x92\x02", value_bytes | acc], acc_size + 2 + value_bytes_size}
+      end
+    rescue
+      ArgumentError ->
+        reraise Protox.EncodingError.new(:media, "invalid field value"), __STACKTRACE__
+    end
+
+    defp encode_feature_flags({acc, acc_size}, msg) do
+      map = Map.fetch!(msg, :feature_flags)
+
+      if map_size(map) == 0 do
+        {acc, acc_size}
+      else
+        Enum.reduce(map, {acc, acc_size}, fn {k, v}, {acc, acc_size} ->
+          {k_value_bytes, k_value_len} = Protox.Encode.encode_string(k)
+          {v_value_bytes, v_value_len} = Protox.Encode.encode_string(v)
+          len = 2 + k_value_len + v_value_len
+          {len_varint, len_varint_size} = Protox.Varint.encode(len)
+
+          acc = [
+            <<"\x8A\x02", len_varint::binary, "\n">>,
+            k_value_bytes,
+            "\x12",
+            v_value_bytes | acc
+          ]
+
+          {acc, acc_size + 4 + k_value_len + v_value_len + len_varint_size}
+        end)
+      end
+    rescue
+      ArgumentError ->
+        reraise Protox.EncodingError.new(:feature_flags, "invalid field value"), __STACKTRACE__
+    end
+
+    defp encode_destination({acc, acc_size}, msg) do
+      if msg.destination == nil do
+        {acc, acc_size}
+      else
+        {value_bytes, value_bytes_size} = Protox.Encode.encode_message(msg.destination)
+        {["\x82\x02", value_bytes | acc], acc_size + 2 + value_bytes_size}
+      end
+    rescue
+      ArgumentError ->
+        reraise Protox.EncodingError.new(:destination, "invalid field value"), __STACKTRACE__
+    end
 
     defp encode_display_name({acc, acc_size}, msg) do
       case msg.display_name do
@@ -647,6 +707,59 @@ defmodule LiveKitProtocolEx.Rpc.InternalCreateSIPParticipantRequest do
             <<0::5, _::3, _rest::binary>> ->
               raise %Protox.IllegalTagError{}
 
+            <<18::5, _wire_type::3, "\x02", bytes::binary>> ->
+              {len, bytes} = Protox.Varint.decode(bytes)
+              {delimited, rest} = Protox.Decode.parse_delimited(bytes, len)
+
+              {[
+                 media:
+                   Protox.MergeMessage.merge(
+                     msg.media,
+                     LiveKitProtocolEx.SIPMediaConfig.decode!(delimited)
+                   )
+               ], rest}
+
+            <<17::5, _wire_type::3, "\x02", bytes::binary>> ->
+              {len, bytes} = Protox.Varint.decode(bytes)
+              {delimited, rest} = Protox.Decode.parse_delimited(bytes, len)
+
+              {[
+                 (
+                   {entry_key, entry_value} =
+                     (
+                       {map_key, map_value} = parse_string_string({:unset, :unset}, delimited)
+
+                       map_key =
+                         case map_key do
+                           :unset -> Protox.Default.default(:string)
+                           _ -> map_key
+                         end
+
+                       map_value =
+                         case map_value do
+                           :unset -> Protox.Default.default(:string)
+                           _ -> map_value
+                         end
+
+                       {map_key, map_value}
+                     )
+
+                   {:feature_flags, Map.put(msg.feature_flags, entry_key, entry_value)}
+                 )
+               ], rest}
+
+            <<16::5, _wire_type::3, "\x02", bytes::binary>> ->
+              {len, bytes} = Protox.Varint.decode(bytes)
+              {delimited, rest} = Protox.Decode.parse_delimited(bytes, len)
+
+              {[
+                 destination:
+                   Protox.MergeMessage.merge(
+                     msg.destination,
+                     LiveKitProtocolEx.Destination.decode!(delimited)
+                   )
+               ], rest}
+
             <<31::5, _wire_type::3, "\x01", bytes::binary>> ->
               {len, bytes} = Protox.Varint.decode(bytes)
               {delimited, rest} = Protox.Decode.parse_delimited(bytes, len)
@@ -990,6 +1103,18 @@ defmodule LiveKitProtocolEx.Rpc.InternalCreateSIPParticipantRequest do
     @spec default(atom()) ::
             {:ok, boolean() | integer() | String.t() | float()}
             | {:error, :no_such_field | :no_default_value}
+    def default(:media) do
+      {:ok, nil}
+    end
+
+    def default(:feature_flags) do
+      {:error, :no_default_value}
+    end
+
+    def default(:destination) do
+      {:ok, nil}
+    end
+
     def default(:display_name) do
       {:error, :no_default_value}
     end
@@ -1147,6 +1272,15 @@ defmodule LiveKitProtocolEx.Rpc.InternalCreateSIPParticipantRequest do
           tag: 4,
           type: :string
         },
+        destination: %{
+          __struct__: Protox.Field,
+          extender: nil,
+          kind: %{__struct__: Protox.Scalar, default_value: nil},
+          label: :optional,
+          name: :destination,
+          tag: 32,
+          type: {:message, LiveKitProtocolEx.Destination}
+        },
         destination_country: %{
           __struct__: Protox.Field,
           extender: nil,
@@ -1182,6 +1316,15 @@ defmodule LiveKitProtocolEx.Rpc.InternalCreateSIPParticipantRequest do
           name: :enabled_features,
           tag: 25,
           type: {:enum, LiveKitProtocolEx.SIPFeature}
+        },
+        feature_flags: %{
+          __struct__: Protox.Field,
+          extender: nil,
+          kind: :map,
+          label: nil,
+          name: :feature_flags,
+          tag: 33,
+          type: {:string, :string}
         },
         headers: %{
           __struct__: Protox.Field,
@@ -1227,6 +1370,15 @@ defmodule LiveKitProtocolEx.Rpc.InternalCreateSIPParticipantRequest do
           name: :max_call_duration,
           tag: 24,
           type: {:message, Google.Protobuf.Duration}
+        },
+        media: %{
+          __struct__: Protox.Field,
+          extender: nil,
+          kind: %{__struct__: Protox.Scalar, default_value: nil},
+          label: :optional,
+          name: :media,
+          tag: 34,
+          type: {:message, LiveKitProtocolEx.SIPMediaConfig}
         },
         media_encryption: %{
           __struct__: Protox.Field,

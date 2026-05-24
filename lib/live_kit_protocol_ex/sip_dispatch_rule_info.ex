@@ -9,6 +9,10 @@ defmodule LiveKitProtocolEx.SIPDispatchRuleInfo do
   end
 
   @type t :: %__MODULE__{
+          media: LiveKitProtocolEx.SIPMediaConfig.t() | nil,
+          updated_at: Google.Protobuf.Timestamp.t() | nil,
+          created_at: Google.Protobuf.Timestamp.t() | nil,
+          numbers: [String.t()],
           media_encryption: atom(),
           krisp_enabled: boolean(),
           room_config: LiveKitProtocolEx.RoomConfiguration.t() | nil,
@@ -23,7 +27,11 @@ defmodule LiveKitProtocolEx.SIPDispatchRuleInfo do
           sip_dispatch_rule_id: String.t(),
           __uf__: [{non_neg_integer(), Protox.Types.tag(), binary()}]
         }
-  defstruct media_encryption: :SIP_MEDIA_ENCRYPT_DISABLE,
+  defstruct media: nil,
+            updated_at: nil,
+            created_at: nil,
+            numbers: [],
+            media_encryption: :SIP_MEDIA_ENCRYPT_DISABLE,
             krisp_enabled: false,
             room_config: nil,
             room_preset: "",
@@ -49,6 +57,10 @@ defmodule LiveKitProtocolEx.SIPDispatchRuleInfo do
       @spec encode!(t()) :: {iodata(), non_neg_integer()} | no_return()
       def encode!(msg) do
         {_acc = [], _acc_size = 0}
+        |> encode_media(msg)
+        |> encode_updated_at(msg)
+        |> encode_created_at(msg)
+        |> encode_numbers(msg)
         |> encode_media_encryption(msg)
         |> encode_krisp_enabled(msg)
         |> encode_room_config(msg)
@@ -64,6 +76,68 @@ defmodule LiveKitProtocolEx.SIPDispatchRuleInfo do
         |> encode_unknown_fields(msg)
       end
     )
+
+    defp encode_media({acc, acc_size}, msg) do
+      if msg.media == nil do
+        {acc, acc_size}
+      else
+        {value_bytes, value_bytes_size} = Protox.Encode.encode_message(msg.media)
+        {["\x82\x01", value_bytes | acc], acc_size + 2 + value_bytes_size}
+      end
+    rescue
+      ArgumentError ->
+        reraise Protox.EncodingError.new(:media, "invalid field value"), __STACKTRACE__
+    end
+
+    defp encode_updated_at({acc, acc_size}, msg) do
+      if msg.updated_at == nil do
+        {acc, acc_size}
+      else
+        {value_bytes, value_bytes_size} = Protox.Encode.encode_message(msg.updated_at)
+        {["z", value_bytes | acc], acc_size + 1 + value_bytes_size}
+      end
+    rescue
+      ArgumentError ->
+        reraise Protox.EncodingError.new(:updated_at, "invalid field value"), __STACKTRACE__
+    end
+
+    defp encode_created_at({acc, acc_size}, msg) do
+      if msg.created_at == nil do
+        {acc, acc_size}
+      else
+        {value_bytes, value_bytes_size} = Protox.Encode.encode_message(msg.created_at)
+        {["r", value_bytes | acc], acc_size + 1 + value_bytes_size}
+      end
+    rescue
+      ArgumentError ->
+        reraise Protox.EncodingError.new(:created_at, "invalid field value"), __STACKTRACE__
+    end
+
+    defp encode_numbers({acc, acc_size}, msg) do
+      case msg.numbers do
+        [] ->
+          {acc, acc_size}
+
+        values ->
+          {value_bytes, value_size} =
+            (
+              {value_bytes, value_size} =
+                Enum.reduce(values, {_local_acc = [], _local_acc_size = 0}, fn value,
+                                                                               {local_acc,
+                                                                                local_acc_size} ->
+                  {value_bytes, value_bytes_size} = Protox.Encode.encode_string(value)
+                  {[value_bytes, "j" | local_acc], local_acc_size + 1 + value_bytes_size}
+                end)
+
+              {Enum.reverse(value_bytes), value_size}
+            )
+
+          {[value_bytes | acc], acc_size + value_size}
+      end
+    rescue
+      ArgumentError ->
+        reraise Protox.EncodingError.new(:numbers, "invalid field value"), __STACKTRACE__
+    end
 
     defp encode_media_encryption({acc, acc_size}, msg) do
       if msg.media_encryption == :SIP_MEDIA_ENCRYPT_DISABLE do
@@ -319,6 +393,47 @@ defmodule LiveKitProtocolEx.SIPDispatchRuleInfo do
             <<0::5, _::3, _rest::binary>> ->
               raise %Protox.IllegalTagError{}
 
+            <<16::5, _wire_type::3, "\x01", bytes::binary>> ->
+              {len, bytes} = Protox.Varint.decode(bytes)
+              {delimited, rest} = Protox.Decode.parse_delimited(bytes, len)
+
+              {[
+                 media:
+                   Protox.MergeMessage.merge(
+                     msg.media,
+                     LiveKitProtocolEx.SIPMediaConfig.decode!(delimited)
+                   )
+               ], rest}
+
+            <<15::5, _wire_type::3, bytes::binary>> ->
+              {len, bytes} = Protox.Varint.decode(bytes)
+              {delimited, rest} = Protox.Decode.parse_delimited(bytes, len)
+
+              {[
+                 updated_at:
+                   Protox.MergeMessage.merge(
+                     msg.updated_at,
+                     Google.Protobuf.Timestamp.decode!(delimited)
+                   )
+               ], rest}
+
+            <<14::5, _wire_type::3, bytes::binary>> ->
+              {len, bytes} = Protox.Varint.decode(bytes)
+              {delimited, rest} = Protox.Decode.parse_delimited(bytes, len)
+
+              {[
+                 created_at:
+                   Protox.MergeMessage.merge(
+                     msg.created_at,
+                     Google.Protobuf.Timestamp.decode!(delimited)
+                   )
+               ], rest}
+
+            <<13::5, _wire_type::3, bytes::binary>> ->
+              {len, bytes} = Protox.Varint.decode(bytes)
+              {delimited, rest} = Protox.Decode.parse_delimited(bytes, len)
+              {[numbers: msg.numbers ++ [Protox.Decode.validate_string!(delimited)]], rest}
+
             <<12::5, _wire_type::3, bytes::binary>> ->
               {value, rest} =
                 Protox.Decode.parse_enum(bytes, LiveKitProtocolEx.SIPMediaEncryption)
@@ -490,6 +605,22 @@ defmodule LiveKitProtocolEx.SIPDispatchRuleInfo do
     @spec default(atom()) ::
             {:ok, boolean() | integer() | String.t() | float()}
             | {:error, :no_such_field | :no_default_value}
+    def default(:media) do
+      {:ok, nil}
+    end
+
+    def default(:updated_at) do
+      {:ok, nil}
+    end
+
+    def default(:created_at) do
+      {:ok, nil}
+    end
+
+    def default(:numbers) do
+      {:error, :no_default_value}
+    end
+
     def default(:media_encryption) do
       {:ok, :SIP_MEDIA_ENCRYPT_DISABLE}
     end
@@ -557,6 +688,15 @@ defmodule LiveKitProtocolEx.SIPDispatchRuleInfo do
           tag: 8,
           type: {:string, :string}
         },
+        created_at: %{
+          __struct__: Protox.Field,
+          extender: nil,
+          kind: %{__struct__: Protox.Scalar, default_value: nil},
+          label: :optional,
+          name: :created_at,
+          tag: 14,
+          type: {:message, Google.Protobuf.Timestamp}
+        },
         hide_phone_number: %{
           __struct__: Protox.Field,
           extender: nil,
@@ -584,6 +724,15 @@ defmodule LiveKitProtocolEx.SIPDispatchRuleInfo do
           tag: 11,
           type: :bool
         },
+        media: %{
+          __struct__: Protox.Field,
+          extender: nil,
+          kind: %{__struct__: Protox.Scalar, default_value: nil},
+          label: :optional,
+          name: :media,
+          tag: 16,
+          type: {:message, LiveKitProtocolEx.SIPMediaConfig}
+        },
         media_encryption: %{
           __struct__: Protox.Field,
           extender: nil,
@@ -609,6 +758,15 @@ defmodule LiveKitProtocolEx.SIPDispatchRuleInfo do
           label: :optional,
           name: :name,
           tag: 5,
+          type: :string
+        },
+        numbers: %{
+          __struct__: Protox.Field,
+          extender: nil,
+          kind: :unpacked,
+          label: :repeated,
+          name: :numbers,
+          tag: 13,
           type: :string
         },
         room_config: %{
@@ -655,6 +813,15 @@ defmodule LiveKitProtocolEx.SIPDispatchRuleInfo do
           name: :trunk_ids,
           tag: 3,
           type: :string
+        },
+        updated_at: %{
+          __struct__: Protox.Field,
+          extender: nil,
+          kind: %{__struct__: Protox.Scalar, default_value: nil},
+          label: :optional,
+          name: :updated_at,
+          tag: 15,
+          type: {:message, Google.Protobuf.Timestamp}
         }
       },
       file_options: %{

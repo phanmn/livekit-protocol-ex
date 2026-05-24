@@ -37,12 +37,24 @@ defmodule LiveKitProtocolEx.SIPStatusCode do
     183
   end
 
+  def encode(:SIP_STATUS_EARLY_DIALOG_TERMINATED) do
+    199
+  end
+
   def encode(:SIP_STATUS_OK) do
     200
   end
 
   def encode(:SIP_STATUS_ACCEPTED) do
     202
+  end
+
+  def encode(:SIP_STATUS_NO_NOTIFICATION) do
+    204
+  end
+
+  def encode(:SIP_STATUS_MULTIPLE_CHOICES) do
+    300
   end
 
   def encode(:SIP_STATUS_MOVED_PERMANENTLY) do
@@ -55,6 +67,10 @@ defmodule LiveKitProtocolEx.SIPStatusCode do
 
   def encode(:SIP_STATUS_USE_PROXY) do
     305
+  end
+
+  def encode(:SIP_STATUS_ALTERNATIVE_SERVICE) do
+    380
   end
 
   def encode(:SIP_STATUS_BAD_REQUEST) do
@@ -101,6 +117,14 @@ defmodule LiveKitProtocolEx.SIPStatusCode do
     410
   end
 
+  def encode(:SIP_STATUS_LENGTH_REQUIRED) do
+    411
+  end
+
+  def encode(:SIP_STATUS_CONDITIONAL_REQUEST_FAILED) do
+    412
+  end
+
   def encode(:SIP_STATUS_REQUEST_ENTITY_TOO_LARGE) do
     413
   end
@@ -117,6 +141,10 @@ defmodule LiveKitProtocolEx.SIPStatusCode do
     416
   end
 
+  def encode(:SIP_STATUS_UNKNOWN_RESOURCE_PRIORITY) do
+    417
+  end
+
   def encode(:SIP_STATUS_BAD_EXTENSION) do
     420
   end
@@ -125,8 +153,64 @@ defmodule LiveKitProtocolEx.SIPStatusCode do
     421
   end
 
+  def encode(:SIP_STATUS_SESSION_INTERVAL_TOO_SMALL) do
+    422
+  end
+
   def encode(:SIP_STATUS_INTERVAL_TOO_BRIEF) do
     423
+  end
+
+  def encode(:SIP_STATUS_BAD_LOCATION_INFORMATION) do
+    424
+  end
+
+  def encode(:SIP_STATUS_BAD_ALERT_MESSAGE) do
+    425
+  end
+
+  def encode(:SIP_STATUS_USE_IDENTITY_HEADER) do
+    428
+  end
+
+  def encode(:SIP_STATUS_PROVIDE_REFERRER_IDENTITY) do
+    429
+  end
+
+  def encode(:SIP_STATUS_FLOW_FAILED) do
+    430
+  end
+
+  def encode(:SIP_STATUS_ANONYMITY_DISALLOWED) do
+    433
+  end
+
+  def encode(:SIP_STATUS_BAD_IDENTITY_INFO) do
+    436
+  end
+
+  def encode(:SIP_STATUS_UNSUPPORTED_CERTIFICATE) do
+    437
+  end
+
+  def encode(:SIP_STATUS_INVALID_IDENTITY_HEADER) do
+    438
+  end
+
+  def encode(:SIP_STATUS_FIRST_HOP_LACKS_OUTBOUND_SUPPORT) do
+    439
+  end
+
+  def encode(:SIP_STATUS_MAX_BREADTH_EXCEEDED) do
+    440
+  end
+
+  def encode(:SIP_STATUS_BAD_INFO_PACKAGE) do
+    469
+  end
+
+  def encode(:SIP_STATUS_CONSENT_NEEDED) do
+    470
   end
 
   def encode(:SIP_STATUS_TEMPORARILY_UNAVAILABLE) do
@@ -163,6 +247,22 @@ defmodule LiveKitProtocolEx.SIPStatusCode do
 
   def encode(:SIP_STATUS_NOT_ACCEPTABLE_HERE) do
     488
+  end
+
+  def encode(:SIP_STATUS_BAD_EVENT) do
+    489
+  end
+
+  def encode(:SIP_STATUS_REQUEST_PENDING) do
+    491
+  end
+
+  def encode(:SIP_STATUS_UNDECIPHERABLE) do
+    493
+  end
+
+  def encode(:SIP_STATUS_SECURITY_AGREEMENT_REQUIRED) do
+    494
   end
 
   def encode(:SIP_STATUS_INTERNAL_SERVER_ERROR) do
@@ -209,6 +309,14 @@ defmodule LiveKitProtocolEx.SIPStatusCode do
     606
   end
 
+  def encode(:SIP_STATUS_GLOBAL_UNWANTED) do
+    607
+  end
+
+  def encode(:SIP_STATUS_GLOBAL_REJECTED) do
+    608
+  end
+
   def encode(x) do
     x
   end
@@ -216,6 +324,10 @@ defmodule LiveKitProtocolEx.SIPStatusCode do
   @spec decode(integer()) :: atom() | integer()
   def decode(513) do
     :SIP_STATUS_MESSAGE_TOO_LARGE
+  end
+
+  def decode(436) do
+    :SIP_STATUS_BAD_IDENTITY_INFO
   end
 
   def decode(503) do
@@ -234,6 +346,10 @@ defmodule LiveKitProtocolEx.SIPStatusCode do
     :SIP_STATUS_GLOBAL_DOES_NOT_EXIST_ANYWHERE
   end
 
+  def decode(300) do
+    :SIP_STATUS_MULTIPLE_CHOICES
+  end
+
   def decode(415) do
     :SIP_STATUS_UNSUPPORTED_MEDIA_TYPE
   end
@@ -242,12 +358,24 @@ defmodule LiveKitProtocolEx.SIPStatusCode do
     :SIP_STATUS_BUSY_HERE
   end
 
+  def decode(607) do
+    :SIP_STATUS_GLOBAL_UNWANTED
+  end
+
   def decode(182) do
     :SIP_STATUS_QUEUED
   end
 
+  def decode(422) do
+    :SIP_STATUS_SESSION_INTERVAL_TOO_SMALL
+  end
+
   def decode(421) do
     :SIP_STATUS_EXTENSION_REQUIRED
+  end
+
+  def decode(429) do
+    :SIP_STATUS_PROVIDE_REFERRER_IDENTITY
   end
 
   def decode(100) do
@@ -262,8 +390,20 @@ defmodule LiveKitProtocolEx.SIPStatusCode do
     :SIP_STATUS_GLOBAL_NOT_ACCEPTABLE
   end
 
+  def decode(470) do
+    :SIP_STATUS_CONSENT_NEEDED
+  end
+
   def decode(408) do
     :SIP_STATUS_REQUEST_TIMEOUT
+  end
+
+  def decode(424) do
+    :SIP_STATUS_BAD_LOCATION_INFORMATION
+  end
+
+  def decode(204) do
+    :SIP_STATUS_NO_NOTIFICATION
   end
 
   def decode(403) do
@@ -278,6 +418,10 @@ defmodule LiveKitProtocolEx.SIPStatusCode do
     :SIP_STATUS_ADDRESS_INCOMPLETE
   end
 
+  def decode(437) do
+    :SIP_STATUS_UNSUPPORTED_CERTIFICATE
+  end
+
   def decode(302) do
     :SIP_STATUS_MOVED_TEMPORARILY
   end
@@ -286,12 +430,32 @@ defmodule LiveKitProtocolEx.SIPStatusCode do
     :SIP_STATUS_CALL_IS_FORWARDED
   end
 
+  def decode(494) do
+    :SIP_STATUS_SECURITY_AGREEMENT_REQUIRED
+  end
+
   def decode(410) do
     :SIP_STATUS_GONE
   end
 
+  def decode(440) do
+    :SIP_STATUS_MAX_BREADTH_EXCEEDED
+  end
+
+  def decode(380) do
+    :SIP_STATUS_ALTERNATIVE_SERVICE
+  end
+
   def decode(600) do
     :SIP_STATUS_GLOBAL_BUSY_EVERYWHERE
+  end
+
+  def decode(438) do
+    :SIP_STATUS_INVALID_IDENTITY_HEADER
+  end
+
+  def decode(425) do
+    :SIP_STATUS_BAD_ALERT_MESSAGE
   end
 
   def decode(502) do
@@ -306,8 +470,16 @@ defmodule LiveKitProtocolEx.SIPStatusCode do
     :SIP_STATUS_UNAUTHORIZED
   end
 
+  def decode(430) do
+    :SIP_STATUS_FLOW_FAILED
+  end
+
   def decode(481) do
     :SIP_STATUS_CALL_TRANSACTION_DOES_NOT_EXISTS
+  end
+
+  def decode(469) do
+    :SIP_STATUS_BAD_INFO_PACKAGE
   end
 
   def decode(180) do
@@ -318,8 +490,16 @@ defmodule LiveKitProtocolEx.SIPStatusCode do
     :SIP_STATUS_NOTFOUND
   end
 
+  def decode(489) do
+    :SIP_STATUS_BAD_EVENT
+  end
+
   def decode(301) do
     :SIP_STATUS_MOVED_PERMANENTLY
+  end
+
+  def decode(428) do
+    :SIP_STATUS_USE_IDENTITY_HEADER
   end
 
   def decode(200) do
@@ -332,6 +512,26 @@ defmodule LiveKitProtocolEx.SIPStatusCode do
 
   def decode(405) do
     :SIP_STATUS_METHOD_NOT_ALLOWED
+  end
+
+  def decode(411) do
+    :SIP_STATUS_LENGTH_REQUIRED
+  end
+
+  def decode(199) do
+    :SIP_STATUS_EARLY_DIALOG_TERMINATED
+  end
+
+  def decode(493) do
+    :SIP_STATUS_UNDECIPHERABLE
+  end
+
+  def decode(608) do
+    :SIP_STATUS_GLOBAL_REJECTED
+  end
+
+  def decode(439) do
+    :SIP_STATUS_FIRST_HOP_LACKS_OUTBOUND_SUPPORT
   end
 
   def decode(407) do
@@ -366,6 +566,10 @@ defmodule LiveKitProtocolEx.SIPStatusCode do
     :SIP_STATUS_UNKNOWN
   end
 
+  def decode(433) do
+    :SIP_STATUS_ANONYMITY_DISALLOWED
+  end
+
   def decode(488) do
     :SIP_STATUS_NOT_ACCEPTABLE_HERE
   end
@@ -374,8 +578,16 @@ defmodule LiveKitProtocolEx.SIPStatusCode do
     :SIP_STATUS_VERSION_NOT_SUPPORTED
   end
 
+  def decode(412) do
+    :SIP_STATUS_CONDITIONAL_REQUEST_FAILED
+  end
+
   def decode(409) do
     :SIP_STATUS_CONFLICT
+  end
+
+  def decode(417) do
+    :SIP_STATUS_UNKNOWN_RESOURCE_PRIORITY
   end
 
   def decode(414) do
@@ -402,6 +614,10 @@ defmodule LiveKitProtocolEx.SIPStatusCode do
     :SIP_STATUS_REQUEST_TERMINATED
   end
 
+  def decode(491) do
+    :SIP_STATUS_REQUEST_PENDING
+  end
+
   def decode(413) do
     :SIP_STATUS_REQUEST_ENTITY_TOO_LARGE
   end
@@ -423,11 +639,15 @@ defmodule LiveKitProtocolEx.SIPStatusCode do
       {181, :SIP_STATUS_CALL_IS_FORWARDED},
       {182, :SIP_STATUS_QUEUED},
       {183, :SIP_STATUS_SESSION_PROGRESS},
+      {199, :SIP_STATUS_EARLY_DIALOG_TERMINATED},
       {200, :SIP_STATUS_OK},
       {202, :SIP_STATUS_ACCEPTED},
+      {204, :SIP_STATUS_NO_NOTIFICATION},
+      {300, :SIP_STATUS_MULTIPLE_CHOICES},
       {301, :SIP_STATUS_MOVED_PERMANENTLY},
       {302, :SIP_STATUS_MOVED_TEMPORARILY},
       {305, :SIP_STATUS_USE_PROXY},
+      {380, :SIP_STATUS_ALTERNATIVE_SERVICE},
       {400, :SIP_STATUS_BAD_REQUEST},
       {401, :SIP_STATUS_UNAUTHORIZED},
       {402, :SIP_STATUS_PAYMENT_REQUIRED},
@@ -439,13 +659,30 @@ defmodule LiveKitProtocolEx.SIPStatusCode do
       {408, :SIP_STATUS_REQUEST_TIMEOUT},
       {409, :SIP_STATUS_CONFLICT},
       {410, :SIP_STATUS_GONE},
+      {411, :SIP_STATUS_LENGTH_REQUIRED},
+      {412, :SIP_STATUS_CONDITIONAL_REQUEST_FAILED},
       {413, :SIP_STATUS_REQUEST_ENTITY_TOO_LARGE},
       {414, :SIP_STATUS_REQUEST_URI_TOO_LONG},
       {415, :SIP_STATUS_UNSUPPORTED_MEDIA_TYPE},
       {416, :SIP_STATUS_REQUESTED_RANGE_NOT_SATISFIABLE},
+      {417, :SIP_STATUS_UNKNOWN_RESOURCE_PRIORITY},
       {420, :SIP_STATUS_BAD_EXTENSION},
       {421, :SIP_STATUS_EXTENSION_REQUIRED},
+      {422, :SIP_STATUS_SESSION_INTERVAL_TOO_SMALL},
       {423, :SIP_STATUS_INTERVAL_TOO_BRIEF},
+      {424, :SIP_STATUS_BAD_LOCATION_INFORMATION},
+      {425, :SIP_STATUS_BAD_ALERT_MESSAGE},
+      {428, :SIP_STATUS_USE_IDENTITY_HEADER},
+      {429, :SIP_STATUS_PROVIDE_REFERRER_IDENTITY},
+      {430, :SIP_STATUS_FLOW_FAILED},
+      {433, :SIP_STATUS_ANONYMITY_DISALLOWED},
+      {436, :SIP_STATUS_BAD_IDENTITY_INFO},
+      {437, :SIP_STATUS_UNSUPPORTED_CERTIFICATE},
+      {438, :SIP_STATUS_INVALID_IDENTITY_HEADER},
+      {439, :SIP_STATUS_FIRST_HOP_LACKS_OUTBOUND_SUPPORT},
+      {440, :SIP_STATUS_MAX_BREADTH_EXCEEDED},
+      {469, :SIP_STATUS_BAD_INFO_PACKAGE},
+      {470, :SIP_STATUS_CONSENT_NEEDED},
       {480, :SIP_STATUS_TEMPORARILY_UNAVAILABLE},
       {481, :SIP_STATUS_CALL_TRANSACTION_DOES_NOT_EXISTS},
       {482, :SIP_STATUS_LOOP_DETECTED},
@@ -455,6 +692,10 @@ defmodule LiveKitProtocolEx.SIPStatusCode do
       {486, :SIP_STATUS_BUSY_HERE},
       {487, :SIP_STATUS_REQUEST_TERMINATED},
       {488, :SIP_STATUS_NOT_ACCEPTABLE_HERE},
+      {489, :SIP_STATUS_BAD_EVENT},
+      {491, :SIP_STATUS_REQUEST_PENDING},
+      {493, :SIP_STATUS_UNDECIPHERABLE},
+      {494, :SIP_STATUS_SECURITY_AGREEMENT_REQUIRED},
       {500, :SIP_STATUS_INTERNAL_SERVER_ERROR},
       {501, :SIP_STATUS_NOT_IMPLEMENTED},
       {502, :SIP_STATUS_BAD_GATEWAY},
@@ -465,7 +706,9 @@ defmodule LiveKitProtocolEx.SIPStatusCode do
       {600, :SIP_STATUS_GLOBAL_BUSY_EVERYWHERE},
       {603, :SIP_STATUS_GLOBAL_DECLINE},
       {604, :SIP_STATUS_GLOBAL_DOES_NOT_EXIST_ANYWHERE},
-      {606, :SIP_STATUS_GLOBAL_NOT_ACCEPTABLE}
+      {606, :SIP_STATUS_GLOBAL_NOT_ACCEPTABLE},
+      {607, :SIP_STATUS_GLOBAL_UNWANTED},
+      {608, :SIP_STATUS_GLOBAL_REJECTED}
     ]
   end
 
@@ -495,11 +738,23 @@ defmodule LiveKitProtocolEx.SIPStatusCode do
       true
     end
 
+    def has_constant?(:SIP_STATUS_EARLY_DIALOG_TERMINATED) do
+      true
+    end
+
     def has_constant?(:SIP_STATUS_OK) do
       true
     end
 
     def has_constant?(:SIP_STATUS_ACCEPTED) do
+      true
+    end
+
+    def has_constant?(:SIP_STATUS_NO_NOTIFICATION) do
+      true
+    end
+
+    def has_constant?(:SIP_STATUS_MULTIPLE_CHOICES) do
       true
     end
 
@@ -512,6 +767,10 @@ defmodule LiveKitProtocolEx.SIPStatusCode do
     end
 
     def has_constant?(:SIP_STATUS_USE_PROXY) do
+      true
+    end
+
+    def has_constant?(:SIP_STATUS_ALTERNATIVE_SERVICE) do
       true
     end
 
@@ -559,6 +818,14 @@ defmodule LiveKitProtocolEx.SIPStatusCode do
       true
     end
 
+    def has_constant?(:SIP_STATUS_LENGTH_REQUIRED) do
+      true
+    end
+
+    def has_constant?(:SIP_STATUS_CONDITIONAL_REQUEST_FAILED) do
+      true
+    end
+
     def has_constant?(:SIP_STATUS_REQUEST_ENTITY_TOO_LARGE) do
       true
     end
@@ -575,6 +842,10 @@ defmodule LiveKitProtocolEx.SIPStatusCode do
       true
     end
 
+    def has_constant?(:SIP_STATUS_UNKNOWN_RESOURCE_PRIORITY) do
+      true
+    end
+
     def has_constant?(:SIP_STATUS_BAD_EXTENSION) do
       true
     end
@@ -583,7 +854,63 @@ defmodule LiveKitProtocolEx.SIPStatusCode do
       true
     end
 
+    def has_constant?(:SIP_STATUS_SESSION_INTERVAL_TOO_SMALL) do
+      true
+    end
+
     def has_constant?(:SIP_STATUS_INTERVAL_TOO_BRIEF) do
+      true
+    end
+
+    def has_constant?(:SIP_STATUS_BAD_LOCATION_INFORMATION) do
+      true
+    end
+
+    def has_constant?(:SIP_STATUS_BAD_ALERT_MESSAGE) do
+      true
+    end
+
+    def has_constant?(:SIP_STATUS_USE_IDENTITY_HEADER) do
+      true
+    end
+
+    def has_constant?(:SIP_STATUS_PROVIDE_REFERRER_IDENTITY) do
+      true
+    end
+
+    def has_constant?(:SIP_STATUS_FLOW_FAILED) do
+      true
+    end
+
+    def has_constant?(:SIP_STATUS_ANONYMITY_DISALLOWED) do
+      true
+    end
+
+    def has_constant?(:SIP_STATUS_BAD_IDENTITY_INFO) do
+      true
+    end
+
+    def has_constant?(:SIP_STATUS_UNSUPPORTED_CERTIFICATE) do
+      true
+    end
+
+    def has_constant?(:SIP_STATUS_INVALID_IDENTITY_HEADER) do
+      true
+    end
+
+    def has_constant?(:SIP_STATUS_FIRST_HOP_LACKS_OUTBOUND_SUPPORT) do
+      true
+    end
+
+    def has_constant?(:SIP_STATUS_MAX_BREADTH_EXCEEDED) do
+      true
+    end
+
+    def has_constant?(:SIP_STATUS_BAD_INFO_PACKAGE) do
+      true
+    end
+
+    def has_constant?(:SIP_STATUS_CONSENT_NEEDED) do
       true
     end
 
@@ -620,6 +947,22 @@ defmodule LiveKitProtocolEx.SIPStatusCode do
     end
 
     def has_constant?(:SIP_STATUS_NOT_ACCEPTABLE_HERE) do
+      true
+    end
+
+    def has_constant?(:SIP_STATUS_BAD_EVENT) do
+      true
+    end
+
+    def has_constant?(:SIP_STATUS_REQUEST_PENDING) do
+      true
+    end
+
+    def has_constant?(:SIP_STATUS_UNDECIPHERABLE) do
+      true
+    end
+
+    def has_constant?(:SIP_STATUS_SECURITY_AGREEMENT_REQUIRED) do
       true
     end
 
@@ -664,6 +1007,14 @@ defmodule LiveKitProtocolEx.SIPStatusCode do
     end
 
     def has_constant?(:SIP_STATUS_GLOBAL_NOT_ACCEPTABLE) do
+      true
+    end
+
+    def has_constant?(:SIP_STATUS_GLOBAL_UNWANTED) do
+      true
+    end
+
+    def has_constant?(:SIP_STATUS_GLOBAL_REJECTED) do
       true
     end
 

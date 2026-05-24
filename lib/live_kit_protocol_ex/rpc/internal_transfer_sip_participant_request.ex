@@ -9,6 +9,7 @@ defmodule LiveKitProtocolEx.Rpc.InternalTransferSIPParticipantRequest do
   end
 
   @type t :: %__MODULE__{
+          feature_flags: %{String.t() => String.t()},
           ringing_timeout: Google.Protobuf.Duration.t() | nil,
           headers: %{String.t() => String.t()},
           play_dialtone: boolean(),
@@ -16,7 +17,8 @@ defmodule LiveKitProtocolEx.Rpc.InternalTransferSIPParticipantRequest do
           sip_call_id: String.t(),
           __uf__: [{non_neg_integer(), Protox.Types.tag(), binary()}]
         }
-  defstruct ringing_timeout: nil,
+  defstruct feature_flags: %{},
+            ringing_timeout: nil,
             headers: %{},
             play_dialtone: false,
             transfer_to: "",
@@ -35,6 +37,7 @@ defmodule LiveKitProtocolEx.Rpc.InternalTransferSIPParticipantRequest do
       @spec encode!(t()) :: {iodata(), non_neg_integer()} | no_return()
       def encode!(msg) do
         {_acc = [], _acc_size = 0}
+        |> encode_feature_flags(msg)
         |> encode_ringing_timeout(msg)
         |> encode_headers(msg)
         |> encode_play_dialtone(msg)
@@ -43,6 +46,26 @@ defmodule LiveKitProtocolEx.Rpc.InternalTransferSIPParticipantRequest do
         |> encode_unknown_fields(msg)
       end
     )
+
+    defp encode_feature_flags({acc, acc_size}, msg) do
+      map = Map.fetch!(msg, :feature_flags)
+
+      if map_size(map) == 0 do
+        {acc, acc_size}
+      else
+        Enum.reduce(map, {acc, acc_size}, fn {k, v}, {acc, acc_size} ->
+          {k_value_bytes, k_value_len} = Protox.Encode.encode_string(k)
+          {v_value_bytes, v_value_len} = Protox.Encode.encode_string(v)
+          len = 2 + k_value_len + v_value_len
+          {len_varint, len_varint_size} = Protox.Varint.encode(len)
+          acc = [<<"2", len_varint::binary, "\n">>, k_value_bytes, "\x12", v_value_bytes | acc]
+          {acc, acc_size + 3 + k_value_len + v_value_len + len_varint_size}
+        end)
+      end
+    rescue
+      ArgumentError ->
+        reraise Protox.EncodingError.new(:feature_flags, "invalid field value"), __STACKTRACE__
+    end
 
     defp encode_ringing_timeout({acc, acc_size}, msg) do
       if msg.ringing_timeout == nil do
@@ -183,6 +206,35 @@ defmodule LiveKitProtocolEx.Rpc.InternalTransferSIPParticipantRequest do
             <<0::5, _::3, _rest::binary>> ->
               raise %Protox.IllegalTagError{}
 
+            <<6::5, _wire_type::3, bytes::binary>> ->
+              {len, bytes} = Protox.Varint.decode(bytes)
+              {delimited, rest} = Protox.Decode.parse_delimited(bytes, len)
+
+              {[
+                 (
+                   {entry_key, entry_value} =
+                     (
+                       {map_key, map_value} = parse_string_string({:unset, :unset}, delimited)
+
+                       map_key =
+                         case map_key do
+                           :unset -> Protox.Default.default(:string)
+                           _ -> map_key
+                         end
+
+                       map_value =
+                         case map_value do
+                           :unset -> Protox.Default.default(:string)
+                           _ -> map_value
+                         end
+
+                       {map_key, map_value}
+                     )
+
+                   {:feature_flags, Map.put(msg.feature_flags, entry_key, entry_value)}
+                 )
+               ], rest}
+
             <<5::5, _wire_type::3, bytes::binary>> ->
               {len, bytes} = Protox.Varint.decode(bytes)
               {delimited, rest} = Protox.Decode.parse_delimited(bytes, len)
@@ -308,6 +360,10 @@ defmodule LiveKitProtocolEx.Rpc.InternalTransferSIPParticipantRequest do
     @spec default(atom()) ::
             {:ok, boolean() | integer() | String.t() | float()}
             | {:error, :no_such_field | :no_default_value}
+    def default(:feature_flags) do
+      {:error, :no_default_value}
+    end
+
     def default(:ringing_timeout) do
       {:ok, nil}
     end
@@ -338,6 +394,15 @@ defmodule LiveKitProtocolEx.Rpc.InternalTransferSIPParticipantRequest do
     %{
       __struct__: Protox.MessageSchema,
       fields: %{
+        feature_flags: %{
+          __struct__: Protox.Field,
+          extender: nil,
+          kind: :map,
+          label: nil,
+          name: :feature_flags,
+          tag: 6,
+          type: {:string, :string}
+        },
         headers: %{
           __struct__: Protox.Field,
           extender: nil,

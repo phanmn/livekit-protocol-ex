@@ -9,6 +9,7 @@ defmodule LiveKitProtocolEx.Rpc.GetIngressInfoResponse do
   end
 
   @type t :: %__MODULE__{
+          project_id: String.t(),
           feature_flags: %{String.t() => String.t()},
           logging_fields: %{String.t() => String.t()},
           ws_url: String.t(),
@@ -16,7 +17,13 @@ defmodule LiveKitProtocolEx.Rpc.GetIngressInfoResponse do
           info: LiveKitProtocolEx.IngressInfo.t() | nil,
           __uf__: [{non_neg_integer(), Protox.Types.tag(), binary()}]
         }
-  defstruct feature_flags: %{}, logging_fields: %{}, ws_url: "", token: "", info: nil, __uf__: []
+  defstruct project_id: "",
+            feature_flags: %{},
+            logging_fields: %{},
+            ws_url: "",
+            token: "",
+            info: nil,
+            __uf__: []
 
   (
     (
@@ -30,6 +37,7 @@ defmodule LiveKitProtocolEx.Rpc.GetIngressInfoResponse do
       @spec encode!(t()) :: {iodata(), non_neg_integer()} | no_return()
       def encode!(msg) do
         {_acc = [], _acc_size = 0}
+        |> encode_project_id(msg)
         |> encode_feature_flags(msg)
         |> encode_logging_fields(msg)
         |> encode_ws_url(msg)
@@ -38,6 +46,18 @@ defmodule LiveKitProtocolEx.Rpc.GetIngressInfoResponse do
         |> encode_unknown_fields(msg)
       end
     )
+
+    defp encode_project_id({acc, acc_size}, msg) do
+      if msg.project_id == "" do
+        {acc, acc_size}
+      else
+        {value_bytes, value_bytes_size} = Protox.Encode.encode_string(msg.project_id)
+        {["2", value_bytes | acc], acc_size + 1 + value_bytes_size}
+      end
+    rescue
+      ArgumentError ->
+        reraise Protox.EncodingError.new(:project_id, "invalid field value"), __STACKTRACE__
+    end
 
     defp encode_feature_flags({acc, acc_size}, msg) do
       map = Map.fetch!(msg, :feature_flags)
@@ -182,6 +202,11 @@ defmodule LiveKitProtocolEx.Rpc.GetIngressInfoResponse do
 
             <<0::5, _::3, _rest::binary>> ->
               raise %Protox.IllegalTagError{}
+
+            <<6::5, _wire_type::3, bytes::binary>> ->
+              {len, bytes} = Protox.Varint.decode(bytes)
+              {delimited, rest} = Protox.Decode.parse_delimited(bytes, len)
+              {[project_id: Protox.Decode.validate_string!(delimited)], rest}
 
             <<5::5, _wire_type::3, bytes::binary>> ->
               {len, bytes} = Protox.Varint.decode(bytes)
@@ -333,6 +358,10 @@ defmodule LiveKitProtocolEx.Rpc.GetIngressInfoResponse do
     @spec default(atom()) ::
             {:ok, boolean() | integer() | String.t() | float()}
             | {:error, :no_such_field | :no_default_value}
+    def default(:project_id) do
+      {:ok, ""}
+    end
+
     def default(:feature_flags) do
       {:error, :no_default_value}
     end
@@ -389,6 +418,15 @@ defmodule LiveKitProtocolEx.Rpc.GetIngressInfoResponse do
           name: :logging_fields,
           tag: 4,
           type: {:string, :string}
+        },
+        project_id: %{
+          __struct__: Protox.Field,
+          extender: nil,
+          kind: %{__struct__: Protox.Scalar, default_value: ""},
+          label: :optional,
+          name: :project_id,
+          tag: 6,
+          type: :string
         },
         token: %{
           __struct__: Protox.Field,

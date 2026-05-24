@@ -9,6 +9,7 @@ defmodule LiveKitProtocolEx.SIPOutboundConfig do
   end
 
   @type t :: %__MODULE__{
+          from_host: String.t(),
           destination_country: String.t(),
           attributes_to_headers: %{String.t() => String.t()},
           headers_to_attributes: %{String.t() => String.t()},
@@ -18,7 +19,8 @@ defmodule LiveKitProtocolEx.SIPOutboundConfig do
           hostname: String.t(),
           __uf__: [{non_neg_integer(), Protox.Types.tag(), binary()}]
         }
-  defstruct destination_country: "",
+  defstruct from_host: "",
+            destination_country: "",
             attributes_to_headers: %{},
             headers_to_attributes: %{},
             auth_password: "",
@@ -39,6 +41,7 @@ defmodule LiveKitProtocolEx.SIPOutboundConfig do
       @spec encode!(t()) :: {iodata(), non_neg_integer()} | no_return()
       def encode!(msg) do
         {_acc = [], _acc_size = 0}
+        |> encode_from_host(msg)
         |> encode_destination_country(msg)
         |> encode_attributes_to_headers(msg)
         |> encode_headers_to_attributes(msg)
@@ -49,6 +52,18 @@ defmodule LiveKitProtocolEx.SIPOutboundConfig do
         |> encode_unknown_fields(msg)
       end
     )
+
+    defp encode_from_host({acc, acc_size}, msg) do
+      if msg.from_host == "" do
+        {acc, acc_size}
+      else
+        {value_bytes, value_bytes_size} = Protox.Encode.encode_string(msg.from_host)
+        {["B", value_bytes | acc], acc_size + 1 + value_bytes_size}
+      end
+    rescue
+      ArgumentError ->
+        reraise Protox.EncodingError.new(:from_host, "invalid field value"), __STACKTRACE__
+    end
 
     defp encode_destination_country({acc, acc_size}, msg) do
       if msg.destination_country == "" do
@@ -223,6 +238,11 @@ defmodule LiveKitProtocolEx.SIPOutboundConfig do
             <<0::5, _::3, _rest::binary>> ->
               raise %Protox.IllegalTagError{}
 
+            <<8::5, _wire_type::3, bytes::binary>> ->
+              {len, bytes} = Protox.Varint.decode(bytes)
+              {delimited, rest} = Protox.Decode.parse_delimited(bytes, len)
+              {[from_host: Protox.Decode.validate_string!(delimited)], rest}
+
             <<7::5, _wire_type::3, bytes::binary>> ->
               {len, bytes} = Protox.Varint.decode(bytes)
               {delimited, rest} = Protox.Decode.parse_delimited(bytes, len)
@@ -377,6 +397,10 @@ defmodule LiveKitProtocolEx.SIPOutboundConfig do
     @spec default(atom()) ::
             {:ok, boolean() | integer() | String.t() | float()}
             | {:error, :no_such_field | :no_default_value}
+    def default(:from_host) do
+      {:ok, ""}
+    end
+
     def default(:destination_country) do
       {:ok, ""}
     end
@@ -449,6 +473,15 @@ defmodule LiveKitProtocolEx.SIPOutboundConfig do
           label: :optional,
           name: :destination_country,
           tag: 7,
+          type: :string
+        },
+        from_host: %{
+          __struct__: Protox.Field,
+          extender: nil,
+          kind: %{__struct__: Protox.Scalar, default_value: ""},
+          label: :optional,
+          name: :from_host,
+          tag: 8,
           type: :string
         },
         headers_to_attributes: %{

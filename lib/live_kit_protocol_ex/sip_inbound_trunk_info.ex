@@ -9,6 +9,9 @@ defmodule LiveKitProtocolEx.SIPInboundTrunkInfo do
   end
 
   @type t :: %__MODULE__{
+          auth_realm: String.t(),
+          updated_at: Google.Protobuf.Timestamp.t() | nil,
+          created_at: Google.Protobuf.Timestamp.t() | nil,
           media_encryption: atom(),
           include_headers: atom(),
           attributes_to_headers: %{String.t() => String.t()},
@@ -27,7 +30,10 @@ defmodule LiveKitProtocolEx.SIPInboundTrunkInfo do
           sip_trunk_id: String.t(),
           __uf__: [{non_neg_integer(), Protox.Types.tag(), binary()}]
         }
-  defstruct media_encryption: :SIP_MEDIA_ENCRYPT_DISABLE,
+  defstruct auth_realm: "",
+            updated_at: nil,
+            created_at: nil,
+            media_encryption: :SIP_MEDIA_ENCRYPT_DISABLE,
             include_headers: :SIP_NO_HEADERS,
             attributes_to_headers: %{},
             krisp_enabled: false,
@@ -57,6 +63,9 @@ defmodule LiveKitProtocolEx.SIPInboundTrunkInfo do
       @spec encode!(t()) :: {iodata(), non_neg_integer()} | no_return()
       def encode!(msg) do
         {_acc = [], _acc_size = 0}
+        |> encode_auth_realm(msg)
+        |> encode_updated_at(msg)
+        |> encode_created_at(msg)
         |> encode_media_encryption(msg)
         |> encode_include_headers(msg)
         |> encode_attributes_to_headers(msg)
@@ -76,6 +85,42 @@ defmodule LiveKitProtocolEx.SIPInboundTrunkInfo do
         |> encode_unknown_fields(msg)
       end
     )
+
+    defp encode_auth_realm({acc, acc_size}, msg) do
+      if msg.auth_realm == "" do
+        {acc, acc_size}
+      else
+        {value_bytes, value_bytes_size} = Protox.Encode.encode_string(msg.auth_realm)
+        {["\x9A\x01", value_bytes | acc], acc_size + 2 + value_bytes_size}
+      end
+    rescue
+      ArgumentError ->
+        reraise Protox.EncodingError.new(:auth_realm, "invalid field value"), __STACKTRACE__
+    end
+
+    defp encode_updated_at({acc, acc_size}, msg) do
+      if msg.updated_at == nil do
+        {acc, acc_size}
+      else
+        {value_bytes, value_bytes_size} = Protox.Encode.encode_message(msg.updated_at)
+        {["\x92\x01", value_bytes | acc], acc_size + 2 + value_bytes_size}
+      end
+    rescue
+      ArgumentError ->
+        reraise Protox.EncodingError.new(:updated_at, "invalid field value"), __STACKTRACE__
+    end
+
+    defp encode_created_at({acc, acc_size}, msg) do
+      if msg.created_at == nil do
+        {acc, acc_size}
+      else
+        {value_bytes, value_bytes_size} = Protox.Encode.encode_message(msg.created_at)
+        {["\x8A\x01", value_bytes | acc], acc_size + 2 + value_bytes_size}
+      end
+    rescue
+      ArgumentError ->
+        reraise Protox.EncodingError.new(:created_at, "invalid field value"), __STACKTRACE__
+    end
 
     defp encode_media_encryption({acc, acc_size}, msg) do
       if msg.media_encryption == :SIP_MEDIA_ENCRYPT_DISABLE do
@@ -415,6 +460,35 @@ defmodule LiveKitProtocolEx.SIPInboundTrunkInfo do
             <<0::5, _::3, _rest::binary>> ->
               raise %Protox.IllegalTagError{}
 
+            <<19::5, _wire_type::3, "\x01", bytes::binary>> ->
+              {len, bytes} = Protox.Varint.decode(bytes)
+              {delimited, rest} = Protox.Decode.parse_delimited(bytes, len)
+              {[auth_realm: Protox.Decode.validate_string!(delimited)], rest}
+
+            <<18::5, _wire_type::3, "\x01", bytes::binary>> ->
+              {len, bytes} = Protox.Varint.decode(bytes)
+              {delimited, rest} = Protox.Decode.parse_delimited(bytes, len)
+
+              {[
+                 updated_at:
+                   Protox.MergeMessage.merge(
+                     msg.updated_at,
+                     Google.Protobuf.Timestamp.decode!(delimited)
+                   )
+               ], rest}
+
+            <<17::5, _wire_type::3, "\x01", bytes::binary>> ->
+              {len, bytes} = Protox.Varint.decode(bytes)
+              {delimited, rest} = Protox.Decode.parse_delimited(bytes, len)
+
+              {[
+                 created_at:
+                   Protox.MergeMessage.merge(
+                     msg.created_at,
+                     Google.Protobuf.Timestamp.decode!(delimited)
+                   )
+               ], rest}
+
             <<16::5, _wire_type::3, "\x01", bytes::binary>> ->
               {value, rest} =
                 Protox.Decode.parse_enum(bytes, LiveKitProtocolEx.SIPMediaEncryption)
@@ -660,6 +734,18 @@ defmodule LiveKitProtocolEx.SIPInboundTrunkInfo do
     @spec default(atom()) ::
             {:ok, boolean() | integer() | String.t() | float()}
             | {:error, :no_such_field | :no_default_value}
+    def default(:auth_realm) do
+      {:ok, ""}
+    end
+
+    def default(:updated_at) do
+      {:ok, nil}
+    end
+
+    def default(:created_at) do
+      {:ok, nil}
+    end
+
     def default(:media_encryption) do
       {:ok, :SIP_MEDIA_ENCRYPT_DISABLE}
     end
@@ -770,6 +856,15 @@ defmodule LiveKitProtocolEx.SIPInboundTrunkInfo do
           tag: 8,
           type: :string
         },
+        auth_realm: %{
+          __struct__: Protox.Field,
+          extender: nil,
+          kind: %{__struct__: Protox.Scalar, default_value: ""},
+          label: :optional,
+          name: :auth_realm,
+          tag: 19,
+          type: :string
+        },
         auth_username: %{
           __struct__: Protox.Field,
           extender: nil,
@@ -778,6 +873,15 @@ defmodule LiveKitProtocolEx.SIPInboundTrunkInfo do
           name: :auth_username,
           tag: 7,
           type: :string
+        },
+        created_at: %{
+          __struct__: Protox.Field,
+          extender: nil,
+          kind: %{__struct__: Protox.Scalar, default_value: nil},
+          label: :optional,
+          name: :created_at,
+          tag: 17,
+          type: {:message, Google.Protobuf.Timestamp}
         },
         headers: %{
           __struct__: Protox.Field,
@@ -877,6 +981,15 @@ defmodule LiveKitProtocolEx.SIPInboundTrunkInfo do
           name: :sip_trunk_id,
           tag: 1,
           type: :string
+        },
+        updated_at: %{
+          __struct__: Protox.Field,
+          extender: nil,
+          kind: %{__struct__: Protox.Scalar, default_value: nil},
+          label: :optional,
+          name: :updated_at,
+          tag: 18,
+          type: {:message, Google.Protobuf.Timestamp}
         }
       },
       file_options: %{

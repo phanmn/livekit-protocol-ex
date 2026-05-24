@@ -9,6 +9,9 @@ defmodule LiveKitProtocolEx.Rpc.GetSIPTrunkAuthenticationResponse do
   end
 
   @type t :: %__MODULE__{
+          realm: String.t(),
+          feature_flags: %{String.t() => String.t()},
+          error_code: atom(),
           provider_info: LiveKitProtocolEx.ProviderInfo.t() | nil,
           project_id: String.t(),
           sip_trunk_id: String.t(),
@@ -17,7 +20,10 @@ defmodule LiveKitProtocolEx.Rpc.GetSIPTrunkAuthenticationResponse do
           username: String.t(),
           __uf__: [{non_neg_integer(), Protox.Types.tag(), binary()}]
         }
-  defstruct provider_info: nil,
+  defstruct realm: "",
+            feature_flags: %{},
+            error_code: :SIP_TRUNK_AUTH_ERROR_NONE,
+            provider_info: nil,
             project_id: "",
             sip_trunk_id: "",
             drop: false,
@@ -37,6 +43,9 @@ defmodule LiveKitProtocolEx.Rpc.GetSIPTrunkAuthenticationResponse do
       @spec encode!(t()) :: {iodata(), non_neg_integer()} | no_return()
       def encode!(msg) do
         {_acc = [], _acc_size = 0}
+        |> encode_realm(msg)
+        |> encode_feature_flags(msg)
+        |> encode_error_code(msg)
         |> encode_provider_info(msg)
         |> encode_project_id(msg)
         |> encode_sip_trunk_id(msg)
@@ -46,6 +55,54 @@ defmodule LiveKitProtocolEx.Rpc.GetSIPTrunkAuthenticationResponse do
         |> encode_unknown_fields(msg)
       end
     )
+
+    defp encode_realm({acc, acc_size}, msg) do
+      if msg.realm == "" do
+        {acc, acc_size}
+      else
+        {value_bytes, value_bytes_size} = Protox.Encode.encode_string(msg.realm)
+        {["J", value_bytes | acc], acc_size + 1 + value_bytes_size}
+      end
+    rescue
+      ArgumentError ->
+        reraise Protox.EncodingError.new(:realm, "invalid field value"), __STACKTRACE__
+    end
+
+    defp encode_feature_flags({acc, acc_size}, msg) do
+      map = Map.fetch!(msg, :feature_flags)
+
+      if map_size(map) == 0 do
+        {acc, acc_size}
+      else
+        Enum.reduce(map, {acc, acc_size}, fn {k, v}, {acc, acc_size} ->
+          {k_value_bytes, k_value_len} = Protox.Encode.encode_string(k)
+          {v_value_bytes, v_value_len} = Protox.Encode.encode_string(v)
+          len = 2 + k_value_len + v_value_len
+          {len_varint, len_varint_size} = Protox.Varint.encode(len)
+          acc = [<<"B", len_varint::binary, "\n">>, k_value_bytes, "\x12", v_value_bytes | acc]
+          {acc, acc_size + 3 + k_value_len + v_value_len + len_varint_size}
+        end)
+      end
+    rescue
+      ArgumentError ->
+        reraise Protox.EncodingError.new(:feature_flags, "invalid field value"), __STACKTRACE__
+    end
+
+    defp encode_error_code({acc, acc_size}, msg) do
+      if msg.error_code == :SIP_TRUNK_AUTH_ERROR_NONE do
+        {acc, acc_size}
+      else
+        {value_bytes, value_bytes_size} =
+          msg.error_code
+          |> LiveKitProtocolEx.Rpc.SIPTrunkAuthenticationError.encode()
+          |> Protox.Encode.encode_enum()
+
+        {["8", value_bytes | acc], acc_size + 1 + value_bytes_size}
+      end
+    rescue
+      ArgumentError ->
+        reraise Protox.EncodingError.new(:error_code, "invalid field value"), __STACKTRACE__
+    end
 
     defp encode_provider_info({acc, acc_size}, msg) do
       if msg.provider_info == nil do
@@ -187,6 +244,46 @@ defmodule LiveKitProtocolEx.Rpc.GetSIPTrunkAuthenticationResponse do
             <<0::5, _::3, _rest::binary>> ->
               raise %Protox.IllegalTagError{}
 
+            <<9::5, _wire_type::3, bytes::binary>> ->
+              {len, bytes} = Protox.Varint.decode(bytes)
+              {delimited, rest} = Protox.Decode.parse_delimited(bytes, len)
+              {[realm: Protox.Decode.validate_string!(delimited)], rest}
+
+            <<8::5, _wire_type::3, bytes::binary>> ->
+              {len, bytes} = Protox.Varint.decode(bytes)
+              {delimited, rest} = Protox.Decode.parse_delimited(bytes, len)
+
+              {[
+                 (
+                   {entry_key, entry_value} =
+                     (
+                       {map_key, map_value} = parse_string_string({:unset, :unset}, delimited)
+
+                       map_key =
+                         case map_key do
+                           :unset -> Protox.Default.default(:string)
+                           _ -> map_key
+                         end
+
+                       map_value =
+                         case map_value do
+                           :unset -> Protox.Default.default(:string)
+                           _ -> map_value
+                         end
+
+                       {map_key, map_value}
+                     )
+
+                   {:feature_flags, Map.put(msg.feature_flags, entry_key, entry_value)}
+                 )
+               ], rest}
+
+            <<7::5, _wire_type::3, bytes::binary>> ->
+              {value, rest} =
+                Protox.Decode.parse_enum(bytes, LiveKitProtocolEx.Rpc.SIPTrunkAuthenticationError)
+
+              {[error_code: value], rest}
+
             <<6::5, _wire_type::3, bytes::binary>> ->
               {len, bytes} = Protox.Varint.decode(bytes)
               {delimited, rest} = Protox.Decode.parse_delimited(bytes, len)
@@ -233,6 +330,43 @@ defmodule LiveKitProtocolEx.Rpc.GetSIPTrunkAuthenticationResponse do
         parse_key_value(rest, msg_updated)
       end
     )
+
+    (
+      defp parse_string_string(map_entry, <<>>) do
+        map_entry
+      end
+
+      defp parse_string_string({entry_key, entry_value}, bytes) do
+        {map_entry, rest} =
+          case Protox.Decode.parse_key(bytes) do
+            {1, _, rest} ->
+              {res, rest} =
+                (
+                  {len, new_rest} = Protox.Varint.decode(rest)
+                  {delimited, new_rest} = Protox.Decode.parse_delimited(new_rest, len)
+                  {Protox.Decode.validate_string!(delimited), new_rest}
+                )
+
+              {{res, entry_value}, rest}
+
+            {2, _, rest} ->
+              {res, rest} =
+                (
+                  {len, new_rest} = Protox.Varint.decode(rest)
+                  {delimited, new_rest} = Protox.Decode.parse_delimited(new_rest, len)
+                  {Protox.Decode.validate_string!(delimited), new_rest}
+                )
+
+              {{entry_key, res}, rest}
+
+            {tag, wire_type, rest} ->
+              {_, rest} = Protox.Decode.parse_unknown(tag, wire_type, rest)
+              {{entry_key, entry_value}, rest}
+          end
+
+        parse_string_string(map_entry, rest)
+      end
+    )
   )
 
   (
@@ -256,6 +390,18 @@ defmodule LiveKitProtocolEx.Rpc.GetSIPTrunkAuthenticationResponse do
     @spec default(atom()) ::
             {:ok, boolean() | integer() | String.t() | float()}
             | {:error, :no_such_field | :no_default_value}
+    def default(:realm) do
+      {:ok, ""}
+    end
+
+    def default(:feature_flags) do
+      {:error, :no_default_value}
+    end
+
+    def default(:error_code) do
+      {:ok, :SIP_TRUNK_AUTH_ERROR_NONE}
+    end
+
     def default(:provider_info) do
       {:ok, nil}
     end
@@ -299,6 +445,24 @@ defmodule LiveKitProtocolEx.Rpc.GetSIPTrunkAuthenticationResponse do
           tag: 3,
           type: :bool
         },
+        error_code: %{
+          __struct__: Protox.Field,
+          extender: nil,
+          kind: %{__struct__: Protox.Scalar, default_value: :SIP_TRUNK_AUTH_ERROR_NONE},
+          label: :optional,
+          name: :error_code,
+          tag: 7,
+          type: {:enum, LiveKitProtocolEx.Rpc.SIPTrunkAuthenticationError}
+        },
+        feature_flags: %{
+          __struct__: Protox.Field,
+          extender: nil,
+          kind: :map,
+          label: nil,
+          name: :feature_flags,
+          tag: 8,
+          type: {:string, :string}
+        },
         password: %{
           __struct__: Protox.Field,
           extender: nil,
@@ -325,6 +489,15 @@ defmodule LiveKitProtocolEx.Rpc.GetSIPTrunkAuthenticationResponse do
           name: :provider_info,
           tag: 6,
           type: {:message, LiveKitProtocolEx.ProviderInfo}
+        },
+        realm: %{
+          __struct__: Protox.Field,
+          extender: nil,
+          kind: %{__struct__: Protox.Scalar, default_value: ""},
+          label: :optional,
+          name: :realm,
+          tag: 9,
+          type: :string
         },
         sip_trunk_id: %{
           __struct__: Protox.Field,

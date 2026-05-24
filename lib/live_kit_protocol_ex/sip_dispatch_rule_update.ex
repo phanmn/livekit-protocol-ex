@@ -9,6 +9,7 @@ defmodule LiveKitProtocolEx.SIPDispatchRuleUpdate do
   end
 
   @type t :: %__MODULE__{
+          media: LiveKitProtocolEx.SIPMediaConfig.t() | nil,
           attributes: %{String.t() => String.t()},
           rule: LiveKitProtocolEx.SIPDispatchRule.t() | nil,
           trunk_ids: LiveKitProtocolEx.ListUpdate.t() | nil,
@@ -17,7 +18,8 @@ defmodule LiveKitProtocolEx.SIPDispatchRuleUpdate do
           name: String.t() | nil,
           __uf__: [{non_neg_integer(), Protox.Types.tag(), binary()}]
         }
-  defstruct media_encryption: nil,
+  defstruct media: nil,
+            media_encryption: nil,
             attributes: %{},
             metadata: nil,
             name: nil,
@@ -40,12 +42,25 @@ defmodule LiveKitProtocolEx.SIPDispatchRuleUpdate do
         |> encode_media_encryption(msg)
         |> encode_metadata(msg)
         |> encode_name(msg)
+        |> encode_media(msg)
         |> encode_attributes(msg)
         |> encode_rule(msg)
         |> encode_trunk_ids(msg)
         |> encode_unknown_fields(msg)
       end
     )
+
+    defp encode_media({acc, acc_size}, msg) do
+      if msg.media == nil do
+        {acc, acc_size}
+      else
+        {value_bytes, value_bytes_size} = Protox.Encode.encode_message(msg.media)
+        {[":", value_bytes | acc], acc_size + 1 + value_bytes_size}
+      end
+    rescue
+      ArgumentError ->
+        reraise Protox.EncodingError.new(:media, "invalid field value"), __STACKTRACE__
+    end
 
     defp encode_media_encryption({acc, acc_size}, msg) do
       case msg.media_encryption do
@@ -205,6 +220,18 @@ defmodule LiveKitProtocolEx.SIPDispatchRuleUpdate do
             <<0::5, _::3, _rest::binary>> ->
               raise %Protox.IllegalTagError{}
 
+            <<7::5, _wire_type::3, bytes::binary>> ->
+              {len, bytes} = Protox.Varint.decode(bytes)
+              {delimited, rest} = Protox.Decode.parse_delimited(bytes, len)
+
+              {[
+                 media:
+                   Protox.MergeMessage.merge(
+                     msg.media,
+                     LiveKitProtocolEx.SIPMediaConfig.decode!(delimited)
+                   )
+               ], rest}
+
             <<6::5, _wire_type::3, bytes::binary>> ->
               {value, rest} =
                 Protox.Decode.parse_enum(bytes, LiveKitProtocolEx.SIPMediaEncryption)
@@ -344,6 +371,10 @@ defmodule LiveKitProtocolEx.SIPDispatchRuleUpdate do
     @spec default(atom()) ::
             {:ok, boolean() | integer() | String.t() | float()}
             | {:error, :no_such_field | :no_default_value}
+    def default(:media) do
+      {:ok, nil}
+    end
+
     def default(:media_encryption) do
       {:error, :no_default_value}
     end
@@ -386,6 +417,15 @@ defmodule LiveKitProtocolEx.SIPDispatchRuleUpdate do
           name: :attributes,
           tag: 5,
           type: {:string, :string}
+        },
+        media: %{
+          __struct__: Protox.Field,
+          extender: nil,
+          kind: %{__struct__: Protox.Scalar, default_value: nil},
+          label: :optional,
+          name: :media,
+          tag: 7,
+          type: {:message, LiveKitProtocolEx.SIPMediaConfig}
         },
         media_encryption: %{
           __struct__: Protox.Field,

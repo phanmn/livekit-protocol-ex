@@ -9,6 +9,7 @@ defmodule LiveKitProtocolEx.CreateSIPParticipantRequest do
   end
 
   @type t :: %__MODULE__{
+          media: LiveKitProtocolEx.SIPMediaConfig.t() | nil,
           trunk: LiveKitProtocolEx.SIPOutboundConfig.t() | nil,
           wait_until_answered: boolean(),
           media_encryption: atom(),
@@ -29,10 +30,13 @@ defmodule LiveKitProtocolEx.CreateSIPParticipantRequest do
           room_name: String.t(),
           sip_call_to: String.t(),
           sip_trunk_id: String.t(),
+          destination: LiveKitProtocolEx.Destination.t() | nil,
           display_name: String.t() | nil,
           __uf__: [{non_neg_integer(), Protox.Types.tag(), binary()}]
         }
-  defstruct display_name: nil,
+  defstruct media: nil,
+            destination: nil,
+            display_name: nil,
             trunk: nil,
             wait_until_answered: false,
             media_encryption: :SIP_MEDIA_ENCRYPT_DISABLE,
@@ -67,7 +71,9 @@ defmodule LiveKitProtocolEx.CreateSIPParticipantRequest do
       @spec encode!(t()) :: {iodata(), non_neg_integer()} | no_return()
       def encode!(msg) do
         {_acc = [], _acc_size = 0}
+        |> encode_destination(msg)
         |> encode_display_name(msg)
+        |> encode_media(msg)
         |> encode_trunk(msg)
         |> encode_wait_until_answered(msg)
         |> encode_media_encryption(msg)
@@ -91,6 +97,32 @@ defmodule LiveKitProtocolEx.CreateSIPParticipantRequest do
         |> encode_unknown_fields(msg)
       end
     )
+
+    defp encode_media({acc, acc_size}, msg) do
+      if msg.media == nil do
+        {acc, acc_size}
+      else
+        {value_bytes, value_bytes_size} = Protox.Encode.encode_message(msg.media)
+        {["\xBA\x01", value_bytes | acc], acc_size + 2 + value_bytes_size}
+      end
+    rescue
+      ArgumentError ->
+        reraise Protox.EncodingError.new(:media, "invalid field value"), __STACKTRACE__
+    end
+
+    defp encode_destination({acc, acc_size}, msg) do
+      case msg.destination do
+        nil ->
+          {acc, acc_size}
+
+        child_field_value ->
+          {value_bytes, value_bytes_size} = Protox.Encode.encode_message(child_field_value)
+          {["\xB2\x01", value_bytes | acc], acc_size + 2 + value_bytes_size}
+      end
+    rescue
+      ArgumentError ->
+        reraise Protox.EncodingError.new(:destination, "invalid field value"), __STACKTRACE__
+    end
 
     defp encode_display_name({acc, acc_size}, msg) do
       case msg.display_name do
@@ -451,6 +483,23 @@ defmodule LiveKitProtocolEx.CreateSIPParticipantRequest do
             <<0::5, _::3, _rest::binary>> ->
               raise %Protox.IllegalTagError{}
 
+            <<23::5, _wire_type::3, "\x01", bytes::binary>> ->
+              {len, bytes} = Protox.Varint.decode(bytes)
+              {delimited, rest} = Protox.Decode.parse_delimited(bytes, len)
+
+              {[
+                 media:
+                   Protox.MergeMessage.merge(
+                     msg.media,
+                     LiveKitProtocolEx.SIPMediaConfig.decode!(delimited)
+                   )
+               ], rest}
+
+            <<22::5, _wire_type::3, "\x01", bytes::binary>> ->
+              {len, bytes} = Protox.Varint.decode(bytes)
+              {delimited, rest} = Protox.Decode.parse_delimited(bytes, len)
+              {[destination: LiveKitProtocolEx.Destination.decode!(delimited)], rest}
+
             <<21::5, _wire_type::3, "\x01", bytes::binary>> ->
               {len, bytes} = Protox.Varint.decode(bytes)
               {delimited, rest} = Protox.Decode.parse_delimited(bytes, len)
@@ -691,6 +740,14 @@ defmodule LiveKitProtocolEx.CreateSIPParticipantRequest do
     @spec default(atom()) ::
             {:ok, boolean() | integer() | String.t() | float()}
             | {:error, :no_such_field | :no_default_value}
+    def default(:media) do
+      {:ok, nil}
+    end
+
+    def default(:destination) do
+      {:error, :no_default_value}
+    end
+
     def default(:display_name) do
       {:error, :no_default_value}
     end
@@ -785,6 +842,15 @@ defmodule LiveKitProtocolEx.CreateSIPParticipantRequest do
     %{
       __struct__: Protox.MessageSchema,
       fields: %{
+        destination: %{
+          __struct__: Protox.Field,
+          extender: nil,
+          kind: %{__struct__: Protox.OneOf, parent: :_destination},
+          label: :proto3_optional,
+          name: :destination,
+          tag: 22,
+          type: {:message, LiveKitProtocolEx.Destination}
+        },
         display_name: %{
           __struct__: Protox.Field,
           extender: nil,
@@ -847,6 +913,15 @@ defmodule LiveKitProtocolEx.CreateSIPParticipantRequest do
           name: :max_call_duration,
           tag: 12,
           type: {:message, Google.Protobuf.Duration}
+        },
+        media: %{
+          __struct__: Protox.Field,
+          extender: nil,
+          kind: %{__struct__: Protox.Scalar, default_value: nil},
+          label: :optional,
+          name: :media,
+          tag: 23,
+          type: {:message, LiveKitProtocolEx.SIPMediaConfig}
         },
         media_encryption: %{
           __struct__: Protox.Field,

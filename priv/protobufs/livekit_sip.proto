@@ -23,6 +23,7 @@ option ruby_package = "LiveKit::Proto";
 import "google/protobuf/any.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
 import "livekit_models.proto";
 import "livekit_room.proto";
 
@@ -84,13 +85,17 @@ enum SIPStatusCode {
     SIP_STATUS_CALL_IS_FORWARDED = 181;
     SIP_STATUS_QUEUED = 182;
     SIP_STATUS_SESSION_PROGRESS = 183;
+    SIP_STATUS_EARLY_DIALOG_TERMINATED = 199;
 
     SIP_STATUS_OK = 200;
     SIP_STATUS_ACCEPTED = 202;
+    SIP_STATUS_NO_NOTIFICATION = 204;
 
+    SIP_STATUS_MULTIPLE_CHOICES = 300;
     SIP_STATUS_MOVED_PERMANENTLY = 301;
     SIP_STATUS_MOVED_TEMPORARILY = 302;
     SIP_STATUS_USE_PROXY = 305;
+    SIP_STATUS_ALTERNATIVE_SERVICE = 380;
 
     SIP_STATUS_BAD_REQUEST = 400;
     SIP_STATUS_UNAUTHORIZED = 401;
@@ -103,13 +108,30 @@ enum SIPStatusCode {
     SIP_STATUS_REQUEST_TIMEOUT = 408;
     SIP_STATUS_CONFLICT = 409;
     SIP_STATUS_GONE = 410;
+    SIP_STATUS_LENGTH_REQUIRED = 411;
+    SIP_STATUS_CONDITIONAL_REQUEST_FAILED = 412;
     SIP_STATUS_REQUEST_ENTITY_TOO_LARGE = 413;
     SIP_STATUS_REQUEST_URI_TOO_LONG = 414;
     SIP_STATUS_UNSUPPORTED_MEDIA_TYPE = 415;
     SIP_STATUS_REQUESTED_RANGE_NOT_SATISFIABLE = 416;
+    SIP_STATUS_UNKNOWN_RESOURCE_PRIORITY = 417;
     SIP_STATUS_BAD_EXTENSION = 420;
     SIP_STATUS_EXTENSION_REQUIRED = 421;
+    SIP_STATUS_SESSION_INTERVAL_TOO_SMALL = 422;
     SIP_STATUS_INTERVAL_TOO_BRIEF = 423;
+    SIP_STATUS_BAD_LOCATION_INFORMATION = 424;
+    SIP_STATUS_BAD_ALERT_MESSAGE = 425;
+    SIP_STATUS_USE_IDENTITY_HEADER = 428;
+    SIP_STATUS_PROVIDE_REFERRER_IDENTITY = 429;
+    SIP_STATUS_FLOW_FAILED = 430;
+    SIP_STATUS_ANONYMITY_DISALLOWED = 433;
+    SIP_STATUS_BAD_IDENTITY_INFO = 436;
+    SIP_STATUS_UNSUPPORTED_CERTIFICATE = 437;
+    SIP_STATUS_INVALID_IDENTITY_HEADER = 438;
+    SIP_STATUS_FIRST_HOP_LACKS_OUTBOUND_SUPPORT = 439;
+    SIP_STATUS_MAX_BREADTH_EXCEEDED = 440;
+    SIP_STATUS_BAD_INFO_PACKAGE = 469;
+    SIP_STATUS_CONSENT_NEEDED = 470;
     SIP_STATUS_TEMPORARILY_UNAVAILABLE = 480;
     SIP_STATUS_CALL_TRANSACTION_DOES_NOT_EXISTS = 481;
     SIP_STATUS_LOOP_DETECTED = 482;
@@ -119,6 +141,10 @@ enum SIPStatusCode {
     SIP_STATUS_BUSY_HERE = 486;
     SIP_STATUS_REQUEST_TERMINATED = 487;
     SIP_STATUS_NOT_ACCEPTABLE_HERE = 488;
+    SIP_STATUS_BAD_EVENT = 489;
+    SIP_STATUS_REQUEST_PENDING = 491;
+    SIP_STATUS_UNDECIPHERABLE = 493;
+    SIP_STATUS_SECURITY_AGREEMENT_REQUIRED = 494;
 
     SIP_STATUS_INTERNAL_SERVER_ERROR = 500;
     SIP_STATUS_NOT_IMPLEMENTED = 501;
@@ -132,6 +158,8 @@ enum SIPStatusCode {
     SIP_STATUS_GLOBAL_DECLINE = 603;
     SIP_STATUS_GLOBAL_DOES_NOT_EXIST_ANYWHERE = 604;
     SIP_STATUS_GLOBAL_NOT_ACCEPTABLE = 606;
+    SIP_STATUS_GLOBAL_UNWANTED = 607;
+    SIP_STATUS_GLOBAL_REJECTED = 608;
 }
 
 // SIPStatus is returned as an error detail in CreateSIPParticipant.
@@ -152,7 +180,7 @@ message CreateSIPTrunkRequest {
   // Number used to make outbound calls
   string outbound_number = 3;
 
-  repeated string inbound_numbers_regex = 4 [deprecated=true];
+  repeated string inbound_numbers_regex = 4;
 
   // Accepted `To` values. This Trunk will only accept a call made to
   // these numbers. This allows you to have distinct Trunks for different phone
@@ -191,10 +219,26 @@ enum SIPMediaEncryption {
   SIP_MEDIA_ENCRYPT_REQUIRE = 2; // require encryption
 }
 
+message SIPCodec {
+  string name = 1;
+  uint32 rate = 2;
+}
+
+message SIPMediaConfig {
+  // if set, ignore the default codecs and use the list below.
+  bool only_listed_codecs = 1;
+  // List of allowed codecs. If only_listed_codecs is not set, this list is added to default codecs.
+  repeated SIPCodec codecs = 2;
+  optional SIPMediaEncryption encryption = 3;
+  // Use specific media timeout. If zero or not specified, will use default timeout.
+  optional google.protobuf.Duration media_timeout = 4;
+}
+
 message ProviderInfo {
   string id = 1;
   string name = 2;
   ProviderType type = 3;
+  bool prevent_transfer = 4;
 }
 
 enum ProviderType {
@@ -228,7 +272,7 @@ message SIPTrunkInfo {
   // Transport used for inbound and outbound calls.
   SIPTransport transport = 13;
 
-  repeated string inbound_numbers_regex = 5 [deprecated=true];
+  repeated string inbound_numbers_regex = 5;
 
   // Accepted `To` values. This Trunk will only accept a call made to
   // these numbers. This allows you to have distinct Trunks for different phone
@@ -286,6 +330,7 @@ message SIPInboundTrunkInfo {
   // May be empty to have no authentication.
   string auth_username = 7;
   string auth_password = 8;
+  string auth_realm = 19;
 
   // Include these SIP X-* headers in 200 OK responses.
   map<string, string> headers = 9;
@@ -310,7 +355,10 @@ message SIPInboundTrunkInfo {
   bool krisp_enabled = 13;
   SIPMediaEncryption media_encryption = 16;
 
-  // NEXT ID: 17
+  google.protobuf.Timestamp created_at = 17;
+  google.protobuf.Timestamp updated_at = 18;
+
+  // NEXT ID: 20
 }
 
 message SIPInboundTrunkUpdate {
@@ -319,6 +367,7 @@ message SIPInboundTrunkUpdate {
   ListUpdate allowed_numbers = 3;
   optional string auth_username = 4;
   optional string auth_password = 5;
+  optional string auth_realm = 9;
   optional string name = 6;
   optional string metadata = 7;
   optional SIPMediaEncryption media_encryption = 8;
@@ -381,7 +430,15 @@ message SIPOutboundTrunkInfo {
 
   SIPMediaEncryption media_encryption = 13;
 
-  // NEXT ID: 15
+  // Optional custom hostname for the 'From' SIP header in outbound INVITEs.
+  // When set, outbound calls from this trunk will use this host instead of the default project SIP domain.
+  // Enables originating calls from custom domains.
+  string from_host = 15;
+
+  google.protobuf.Timestamp created_at = 16;
+  google.protobuf.Timestamp updated_at = 17;
+
+  // NEXT ID: 18
 }
 
 message SIPOutboundTrunkUpdate {
@@ -394,8 +451,9 @@ message SIPOutboundTrunkUpdate {
   optional string name = 6;
   optional string metadata = 7;
   optional SIPMediaEncryption media_encryption = 8;
+  optional string from_host = 10;
 
-  // NEXT ID: 10
+  // NEXT ID: 11
 }
 
 message GetSIPInboundTrunkRequest {
@@ -470,6 +528,9 @@ message SIPDispatchRuleIndividual {
 
   // Optional pin required to enter room
   string pin = 2;
+
+  // Optionally append random suffix
+  bool no_randomness = 3;
 }
 
 message SIPDispatchRuleCallee {
@@ -501,33 +562,33 @@ message SIPDispatchRule {
 message CreateSIPDispatchRuleRequest {
   SIPDispatchRuleInfo dispatch_rule = 10; // Rule ID is ignored
 
-  SIPDispatchRule rule = 1 [deprecated=true];
+  SIPDispatchRule rule = 1;
 
   // What trunks are accepted for this dispatch rule
   // If empty all trunks will match this dispatch rule
-  repeated string trunk_ids = 2 [deprecated=true];
+  repeated string trunk_ids = 2;
 
   // By default the From value (Phone number) is used for participant name/identity and added to attributes.
   // If true, a random value for identity will be used and numbers will be omitted from attributes.
-  bool hide_phone_number = 3 [deprecated=true];
+  bool hide_phone_number = 3;
 
   // Dispatch Rule will only accept a call made to these numbers (if set).
-  repeated string inbound_numbers = 6 [deprecated=true];
+  repeated string inbound_numbers = 6;
 
   // Optional human-readable name for the Dispatch Rule.
-  string name = 4 [deprecated=true];
+  string name = 4;
   // User-defined metadata for the Dispatch Rule.
   // Participants created by this rule will inherit this metadata.
-  string metadata = 5 [deprecated=true];
+  string metadata = 5;
   // User-defined attributes for the Dispatch Rule.
   // Participants created by this rule will inherit these attributes.
-  map<string, string> attributes = 7 [deprecated=true];
+  map<string, string> attributes = 7;
 
   // Cloud-only, config preset to use
-  string room_preset = 8 [deprecated=true];
+  string room_preset = 8;
 
   // RoomConfiguration to use if the participant initiates the room
-  RoomConfiguration room_config = 9 [deprecated=true];
+  RoomConfiguration room_config = 9;
 
   // NEXT ID: 11
 }
@@ -545,8 +606,11 @@ message SIPDispatchRuleInfo {
   SIPDispatchRule rule = 2;
   repeated string trunk_ids = 3;
   bool hide_phone_number = 4;
-  // Dispatch Rule will only accept a call made to these numbers (if set).
+  // Dispatch Rule will only accept a call made from these numbers (if set).
   repeated string inbound_numbers = 7;
+
+  // Dispatch Rule will only accept a call made to these numbers (if set).
+  repeated string numbers = 13;
 
   // Human-readable name for the Dispatch Rule.
   string name = 5;
@@ -563,9 +627,14 @@ message SIPDispatchRuleInfo {
   // RoomConfiguration to use if the participant initiates the room
   RoomConfiguration room_config = 10;
 
+  SIPMediaConfig media = 16;
   bool krisp_enabled = 11;
   SIPMediaEncryption media_encryption = 12;
-  // NEXT ID: 13
+
+  google.protobuf.Timestamp created_at = 14;
+  google.protobuf.Timestamp updated_at = 15;
+
+  // NEXT ID: 17
 }
 
 message SIPDispatchRuleUpdate {
@@ -575,6 +644,7 @@ message SIPDispatchRuleUpdate {
   optional string metadata = 4;
   map<string, string> attributes = 5;
   optional SIPMediaEncryption media_encryption = 6;
+  SIPMediaConfig media = 7;
 }
 
 // ListSIPDispatchRuleRequest lists dispatch rules for given filters. If no filters are set, all rules are listed.
@@ -617,7 +687,10 @@ message SIPOutboundConfig {
   // Keys are the names of attributes and values are the names of X-* headers they will be mapped to.
   map<string, string> attributes_to_headers = 6;
 
-  // NEXT ID: 7
+  // Optional custom hostname for the 'From' SIP header. When set, outbound calls use this host instead of the default project SIP domain.
+  string from_host = 8;
+
+  // NEXT ID: 9
 }
 
 // A SIP Participant is a singular SIP session connected to a LiveKit room via
@@ -652,7 +725,7 @@ message CreateSIPParticipantRequest {
   string dtmf = 5;
 
   // Optionally play dialtone in the room as an audible indicator for existing participants. The `play_ringtone` option is deprectated but has the same effect.
-  bool play_ringtone = 6 [deprecated = true];
+  bool play_ringtone = 6;
   bool play_dialtone = 13;
 
   // By default the From value (Phone number) is used for participant name/identity (if not set) and added to attributes.
@@ -678,6 +751,7 @@ message CreateSIPParticipantRequest {
   bool krisp_enabled = 14;
 
   SIPMediaEncryption media_encryption = 18;
+  SIPMediaConfig media = 23;
 
   // Wait for the answer for the call before returning.
   bool wait_until_answered = 19;
@@ -689,7 +763,8 @@ message CreateSIPParticipantRequest {
   // 2) Empty string: Do not send a display name, which will result in a CNAM lookup downstream.
   // 3) Non-empty: Use the specified value as the display name.
   optional string display_name = 21;
-  // NEXT ID: 22
+  optional Destination destination = 22;
+  // NEXT ID: 24
 }
 
 message SIPParticipantInfo {
@@ -726,9 +801,9 @@ message SIPCallInfo {
   map<string, string> participant_attributes = 18;
   SIPUri from_uri = 6;
   SIPUri to_uri = 7;
-  int64 created_at = 9 [ deprecated = true ];
-  int64 started_at = 10 [ deprecated = true ];
-  int64 ended_at = 11 [ deprecated = true ];
+  int64 created_at = 9;
+  int64 started_at = 10;
+  int64 ended_at = 11;
   repeated SIPFeature enabled_features = 14;
   SIPCallDirection call_direction = 15;
   SIPCallStatus call_status = 8;
@@ -743,8 +818,9 @@ message SIPCallInfo {
   string pcap_file_link = 25;
   repeated google.protobuf.Any call_context = 26;
   ProviderInfo provider_info = 27;
+  string sip_call_id = 28;
 
-  // NEXT ID: 28
+  // NEXT ID: 29
 }
 
 message SIPTransferInfo {
@@ -791,4 +867,10 @@ enum SIPCallDirection {
   SCD_UNKNOWN = 0;
   SCD_INBOUND = 1;
   SCD_OUTBOUND = 2;
+}
+
+message Destination {
+  string city = 1;
+  string country = 2;
+  string region = 3;
 }

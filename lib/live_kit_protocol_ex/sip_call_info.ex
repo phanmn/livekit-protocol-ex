@@ -9,6 +9,7 @@ defmodule LiveKitProtocolEx.SIPCallInfo do
   end
 
   @type t :: %__MODULE__{
+          sip_call_id: String.t(),
           provider_info: LiveKitProtocolEx.ProviderInfo.t() | nil,
           call_context: [Google.Protobuf.Any.t()],
           pcap_file_link: String.t(),
@@ -38,7 +39,8 @@ defmodule LiveKitProtocolEx.SIPCallInfo do
           call_id: String.t(),
           __uf__: [{non_neg_integer(), Protox.Types.tag(), binary()}]
         }
-  defstruct provider_info: nil,
+  defstruct sip_call_id: "",
+            provider_info: nil,
             call_context: [],
             pcap_file_link: "",
             ended_at_ns: 0,
@@ -79,6 +81,7 @@ defmodule LiveKitProtocolEx.SIPCallInfo do
       @spec encode!(t()) :: {iodata(), non_neg_integer()} | no_return()
       def encode!(msg) do
         {_acc = [], _acc_size = 0}
+        |> encode_sip_call_id(msg)
         |> encode_provider_info(msg)
         |> encode_call_context(msg)
         |> encode_pcap_file_link(msg)
@@ -109,6 +112,18 @@ defmodule LiveKitProtocolEx.SIPCallInfo do
         |> encode_unknown_fields(msg)
       end
     )
+
+    defp encode_sip_call_id({acc, acc_size}, msg) do
+      if msg.sip_call_id == "" do
+        {acc, acc_size}
+      else
+        {value_bytes, value_bytes_size} = Protox.Encode.encode_string(msg.sip_call_id)
+        {["\xE2\x01", value_bytes | acc], acc_size + 2 + value_bytes_size}
+      end
+    rescue
+      ArgumentError ->
+        reraise Protox.EncodingError.new(:sip_call_id, "invalid field value"), __STACKTRACE__
+    end
 
     defp encode_provider_info({acc, acc_size}, msg) do
       if msg.provider_info == nil do
@@ -563,6 +578,11 @@ defmodule LiveKitProtocolEx.SIPCallInfo do
             <<0::5, _::3, _rest::binary>> ->
               raise %Protox.IllegalTagError{}
 
+            <<28::5, _wire_type::3, "\x01", bytes::binary>> ->
+              {len, bytes} = Protox.Varint.decode(bytes)
+              {delimited, rest} = Protox.Decode.parse_delimited(bytes, len)
+              {[sip_call_id: Protox.Decode.validate_string!(delimited)], rest}
+
             <<27::5, _wire_type::3, "\x01", bytes::binary>> ->
               {len, bytes} = Protox.Varint.decode(bytes)
               {delimited, rest} = Protox.Decode.parse_delimited(bytes, len)
@@ -825,6 +845,10 @@ defmodule LiveKitProtocolEx.SIPCallInfo do
     @spec default(atom()) ::
             {:ok, boolean() | integer() | String.t() | float()}
             | {:error, :no_such_field | :no_default_value}
+    def default(:sip_call_id) do
+      {:ok, ""}
+    end
+
     def default(:provider_info) do
       {:ok, nil}
     end
@@ -1148,6 +1172,15 @@ defmodule LiveKitProtocolEx.SIPCallInfo do
           label: :optional,
           name: :room_name,
           tag: 3,
+          type: :string
+        },
+        sip_call_id: %{
+          __struct__: Protox.Field,
+          extender: nil,
+          kind: %{__struct__: Protox.Scalar, default_value: ""},
+          label: :optional,
+          name: :sip_call_id,
+          tag: 28,
           type: :string
         },
         started_at: %{

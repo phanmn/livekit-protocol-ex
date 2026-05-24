@@ -12,6 +12,7 @@ defmodule LiveKitProtocolEx.SIPInboundTrunkUpdate do
           allowed_numbers: LiveKitProtocolEx.ListUpdate.t() | nil,
           allowed_addresses: LiveKitProtocolEx.ListUpdate.t() | nil,
           numbers: LiveKitProtocolEx.ListUpdate.t() | nil,
+          auth_realm: String.t() | nil,
           media_encryption: atom() | nil,
           metadata: String.t() | nil,
           name: String.t() | nil,
@@ -19,7 +20,8 @@ defmodule LiveKitProtocolEx.SIPInboundTrunkUpdate do
           auth_username: String.t() | nil,
           __uf__: [{non_neg_integer(), Protox.Types.tag(), binary()}]
         }
-  defstruct media_encryption: nil,
+  defstruct auth_realm: nil,
+            media_encryption: nil,
             metadata: nil,
             name: nil,
             auth_password: nil,
@@ -41,6 +43,7 @@ defmodule LiveKitProtocolEx.SIPInboundTrunkUpdate do
       @spec encode!(t()) :: {iodata(), non_neg_integer()} | no_return()
       def encode!(msg) do
         {_acc = [], _acc_size = 0}
+        |> encode_auth_realm(msg)
         |> encode_media_encryption(msg)
         |> encode_metadata(msg)
         |> encode_name(msg)
@@ -52,6 +55,20 @@ defmodule LiveKitProtocolEx.SIPInboundTrunkUpdate do
         |> encode_unknown_fields(msg)
       end
     )
+
+    defp encode_auth_realm({acc, acc_size}, msg) do
+      case msg.auth_realm do
+        nil ->
+          {acc, acc_size}
+
+        child_field_value ->
+          {value_bytes, value_bytes_size} = Protox.Encode.encode_string(child_field_value)
+          {["J", value_bytes | acc], acc_size + 1 + value_bytes_size}
+      end
+    rescue
+      ArgumentError ->
+        reraise Protox.EncodingError.new(:auth_realm, "invalid field value"), __STACKTRACE__
+    end
 
     defp encode_media_encryption({acc, acc_size}, msg) do
       case msg.media_encryption do
@@ -232,6 +249,11 @@ defmodule LiveKitProtocolEx.SIPInboundTrunkUpdate do
             <<0::5, _::3, _rest::binary>> ->
               raise %Protox.IllegalTagError{}
 
+            <<9::5, _wire_type::3, bytes::binary>> ->
+              {len, bytes} = Protox.Varint.decode(bytes)
+              {delimited, rest} = Protox.Decode.parse_delimited(bytes, len)
+              {[auth_realm: Protox.Decode.validate_string!(delimited)], rest}
+
             <<8::5, _wire_type::3, bytes::binary>> ->
               {value, rest} =
                 Protox.Decode.parse_enum(bytes, LiveKitProtocolEx.SIPMediaEncryption)
@@ -327,6 +349,10 @@ defmodule LiveKitProtocolEx.SIPInboundTrunkUpdate do
     @spec default(atom()) ::
             {:ok, boolean() | integer() | String.t() | float()}
             | {:error, :no_such_field | :no_default_value}
+    def default(:auth_realm) do
+      {:error, :no_default_value}
+    end
+
     def default(:media_encryption) do
       {:error, :no_default_value}
     end
@@ -394,6 +420,15 @@ defmodule LiveKitProtocolEx.SIPInboundTrunkUpdate do
           label: :proto3_optional,
           name: :auth_password,
           tag: 5,
+          type: :string
+        },
+        auth_realm: %{
+          __struct__: Protox.Field,
+          extender: nil,
+          kind: %{__struct__: Protox.OneOf, parent: :_auth_realm},
+          label: :proto3_optional,
+          name: :auth_realm,
+          tag: 9,
           type: :string
         },
         auth_username: %{

@@ -10,6 +10,7 @@ defmodule LiveKitProtocolEx.SIPOutboundTrunkUpdate do
 
   @type t :: %__MODULE__{
           numbers: LiveKitProtocolEx.ListUpdate.t() | nil,
+          from_host: String.t() | nil,
           destination_country: String.t() | nil,
           media_encryption: atom() | nil,
           metadata: String.t() | nil,
@@ -20,7 +21,8 @@ defmodule LiveKitProtocolEx.SIPOutboundTrunkUpdate do
           address: String.t() | nil,
           __uf__: [{non_neg_integer(), Protox.Types.tag(), binary()}]
         }
-  defstruct destination_country: nil,
+  defstruct from_host: nil,
+            destination_country: nil,
             media_encryption: nil,
             metadata: nil,
             name: nil,
@@ -43,6 +45,7 @@ defmodule LiveKitProtocolEx.SIPOutboundTrunkUpdate do
       @spec encode!(t()) :: {iodata(), non_neg_integer()} | no_return()
       def encode!(msg) do
         {_acc = [], _acc_size = 0}
+        |> encode_from_host(msg)
         |> encode_destination_country(msg)
         |> encode_media_encryption(msg)
         |> encode_metadata(msg)
@@ -55,6 +58,20 @@ defmodule LiveKitProtocolEx.SIPOutboundTrunkUpdate do
         |> encode_unknown_fields(msg)
       end
     )
+
+    defp encode_from_host({acc, acc_size}, msg) do
+      case msg.from_host do
+        nil ->
+          {acc, acc_size}
+
+        child_field_value ->
+          {value_bytes, value_bytes_size} = Protox.Encode.encode_string(child_field_value)
+          {["R", value_bytes | acc], acc_size + 1 + value_bytes_size}
+      end
+    rescue
+      ArgumentError ->
+        reraise Protox.EncodingError.new(:from_host, "invalid field value"), __STACKTRACE__
+    end
 
     defp encode_destination_country({acc, acc_size}, msg) do
       case msg.destination_country do
@@ -257,6 +274,11 @@ defmodule LiveKitProtocolEx.SIPOutboundTrunkUpdate do
             <<0::5, _::3, _rest::binary>> ->
               raise %Protox.IllegalTagError{}
 
+            <<10::5, _wire_type::3, bytes::binary>> ->
+              {len, bytes} = Protox.Varint.decode(bytes)
+              {delimited, rest} = Protox.Decode.parse_delimited(bytes, len)
+              {[from_host: Protox.Decode.validate_string!(delimited)], rest}
+
             <<9::5, _wire_type::3, bytes::binary>> ->
               {len, bytes} = Protox.Varint.decode(bytes)
               {delimited, rest} = Protox.Decode.parse_delimited(bytes, len)
@@ -342,6 +364,10 @@ defmodule LiveKitProtocolEx.SIPOutboundTrunkUpdate do
     @spec default(atom()) ::
             {:ok, boolean() | integer() | String.t() | float()}
             | {:error, :no_such_field | :no_default_value}
+    def default(:from_host) do
+      {:error, :no_default_value}
+    end
+
     def default(:destination_country) do
       {:error, :no_default_value}
     end
@@ -422,6 +448,15 @@ defmodule LiveKitProtocolEx.SIPOutboundTrunkUpdate do
           label: :proto3_optional,
           name: :destination_country,
           tag: 9,
+          type: :string
+        },
+        from_host: %{
+          __struct__: Protox.Field,
+          extender: nil,
+          kind: %{__struct__: Protox.OneOf, parent: :_from_host},
+          label: :proto3_optional,
+          name: :from_host,
+          tag: 10,
           type: :string
         },
         media_encryption: %{

@@ -9,6 +9,7 @@ defmodule LiveKitProtocolEx.Rpc.SIPCall do
   end
 
   @type t :: %__MODULE__{
+          project_id: String.t(),
           sip_call_id: String.t(),
           via: [LiveKitProtocolEx.SIPUri.t()],
           to: LiveKitProtocolEx.SIPUri.t() | nil,
@@ -18,7 +19,8 @@ defmodule LiveKitProtocolEx.Rpc.SIPCall do
           lk_call_id: String.t(),
           __uf__: [{non_neg_integer(), Protox.Types.tag(), binary()}]
         }
-  defstruct sip_call_id: "",
+  defstruct project_id: "",
+            sip_call_id: "",
             via: [],
             to: nil,
             from: nil,
@@ -39,6 +41,7 @@ defmodule LiveKitProtocolEx.Rpc.SIPCall do
       @spec encode!(t()) :: {iodata(), non_neg_integer()} | no_return()
       def encode!(msg) do
         {_acc = [], _acc_size = 0}
+        |> encode_project_id(msg)
         |> encode_sip_call_id(msg)
         |> encode_via(msg)
         |> encode_to(msg)
@@ -49,6 +52,18 @@ defmodule LiveKitProtocolEx.Rpc.SIPCall do
         |> encode_unknown_fields(msg)
       end
     )
+
+    defp encode_project_id({acc, acc_size}, msg) do
+      if msg.project_id == "" do
+        {acc, acc_size}
+      else
+        {value_bytes, value_bytes_size} = Protox.Encode.encode_string(msg.project_id)
+        {["B", value_bytes | acc], acc_size + 1 + value_bytes_size}
+      end
+    rescue
+      ArgumentError ->
+        reraise Protox.EncodingError.new(:project_id, "invalid field value"), __STACKTRACE__
+    end
 
     defp encode_sip_call_id({acc, acc_size}, msg) do
       if msg.sip_call_id == "" do
@@ -216,6 +231,11 @@ defmodule LiveKitProtocolEx.Rpc.SIPCall do
             <<0::5, _::3, _rest::binary>> ->
               raise %Protox.IllegalTagError{}
 
+            <<8::5, _wire_type::3, bytes::binary>> ->
+              {len, bytes} = Protox.Varint.decode(bytes)
+              {delimited, rest} = Protox.Decode.parse_delimited(bytes, len)
+              {[project_id: Protox.Decode.validate_string!(delimited)], rest}
+
             <<7::5, _wire_type::3, bytes::binary>> ->
               {len, bytes} = Protox.Varint.decode(bytes)
               {delimited, rest} = Protox.Decode.parse_delimited(bytes, len)
@@ -302,6 +322,10 @@ defmodule LiveKitProtocolEx.Rpc.SIPCall do
     @spec default(atom()) ::
             {:ok, boolean() | integer() | String.t() | float()}
             | {:error, :no_such_field | :no_default_value}
+    def default(:project_id) do
+      {:ok, ""}
+    end
+
     def default(:sip_call_id) do
       {:ok, ""}
     end
@@ -365,6 +389,15 @@ defmodule LiveKitProtocolEx.Rpc.SIPCall do
           label: :optional,
           name: :lk_call_id,
           tag: 1,
+          type: :string
+        },
+        project_id: %{
+          __struct__: Protox.Field,
+          extender: nil,
+          kind: %{__struct__: Protox.Scalar, default_value: ""},
+          label: :optional,
+          name: :project_id,
+          tag: 8,
           type: :string
         },
         sip_call_id: %{

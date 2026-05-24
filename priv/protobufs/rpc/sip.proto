@@ -25,17 +25,8 @@ import "livekit_sip.proto";
 
 service SIPInternal {
   rpc CreateSIPParticipant(InternalCreateSIPParticipantRequest) returns (InternalCreateSIPParticipantResponse) {
-    option (livekit_protocol_ex.psrpc.options).affinity_func = true;
-    option (livekit_protocol_ex.psrpc.options).topics = true;
   };
   rpc TransferSIPParticipant(InternalTransferSIPParticipantRequest) returns (google.protobuf.Empty) {
-    option (livekit_protocol_ex.psrpc.options) = {
-      topics: true
-      topic_params: {
-        names: ["sip_call_id"]
-        typed: false
-      }
-    };
   };
 }
 
@@ -101,6 +92,7 @@ message InternalCreateSIPParticipantRequest {
   google.protobuf.Duration max_call_duration = 24;
 
   livekit_protocol_ex.SIPMediaEncryption media_encryption = 28;
+  livekit_protocol_ex.SIPMediaConfig media = 34;
 
   // Wait for the answer for the call before returning.
   bool wait_until_answered = 29;
@@ -113,7 +105,13 @@ message InternalCreateSIPParticipantRequest {
   // 3) Non-empty: Use the specified value as the display name.
   optional string display_name = 31;
 
-  // NEXT ID: 32
+  // Destination information for routing decisions
+  livekit_protocol_ex.Destination destination = 32;
+
+  // Project-level feature flags from ProjectSettings.FeatureFlags
+  map<string, string> feature_flags = 33;
+
+  // NEXT ID: 35
 }
 
 message InternalCreateSIPParticipantResponse {
@@ -134,5 +132,8 @@ message InternalTransferSIPParticipantRequest {
 
   // Max time for the transfer destination to answer the call.
   google.protobuf.Duration ringing_timeout = 5;
+
+  // Project-level feature flags from ProjectSettings.FeatureFlags
+  map<string, string> feature_flags = 6;
 }
 

@@ -9,11 +9,12 @@ defmodule LiveKitProtocolEx.SIPDispatchRuleIndividual do
   end
 
   @type t :: %__MODULE__{
+          no_randomness: boolean(),
           pin: String.t(),
           room_prefix: String.t(),
           __uf__: [{non_neg_integer(), Protox.Types.tag(), binary()}]
         }
-  defstruct pin: "", room_prefix: "", __uf__: []
+  defstruct no_randomness: false, pin: "", room_prefix: "", __uf__: []
 
   (
     (
@@ -27,11 +28,24 @@ defmodule LiveKitProtocolEx.SIPDispatchRuleIndividual do
       @spec encode!(t()) :: {iodata(), non_neg_integer()} | no_return()
       def encode!(msg) do
         {_acc = [], _acc_size = 0}
+        |> encode_no_randomness(msg)
         |> encode_pin(msg)
         |> encode_room_prefix(msg)
         |> encode_unknown_fields(msg)
       end
     )
+
+    defp encode_no_randomness({acc, acc_size}, msg) do
+      if msg.no_randomness == false do
+        {acc, acc_size}
+      else
+        {value_bytes, value_bytes_size} = Protox.Encode.encode_bool(msg.no_randomness)
+        {["\x18", value_bytes | acc], acc_size + 1 + value_bytes_size}
+      end
+    rescue
+      ArgumentError ->
+        reraise Protox.EncodingError.new(:no_randomness, "invalid field value"), __STACKTRACE__
+    end
 
     defp encode_pin({acc, acc_size}, msg) do
       if msg.pin == "" do
@@ -125,6 +139,10 @@ defmodule LiveKitProtocolEx.SIPDispatchRuleIndividual do
             <<0::5, _::3, _rest::binary>> ->
               raise %Protox.IllegalTagError{}
 
+            <<3::5, _wire_type::3, bytes::binary>> ->
+              {value, rest} = Protox.Decode.parse_bool(bytes)
+              {[no_randomness: value], rest}
+
             <<2::5, _wire_type::3, bytes::binary>> ->
               {len, bytes} = Protox.Varint.decode(bytes)
               {delimited, rest} = Protox.Decode.parse_delimited(bytes, len)
@@ -168,6 +186,10 @@ defmodule LiveKitProtocolEx.SIPDispatchRuleIndividual do
     @spec default(atom()) ::
             {:ok, boolean() | integer() | String.t() | float()}
             | {:error, :no_such_field | :no_default_value}
+    def default(:no_randomness) do
+      {:ok, false}
+    end
+
     def default(:pin) do
       {:ok, ""}
     end
@@ -186,6 +208,15 @@ defmodule LiveKitProtocolEx.SIPDispatchRuleIndividual do
     %{
       __struct__: Protox.MessageSchema,
       fields: %{
+        no_randomness: %{
+          __struct__: Protox.Field,
+          extender: nil,
+          kind: %{__struct__: Protox.Scalar, default_value: false},
+          label: :optional,
+          name: :no_randomness,
+          tag: 3,
+          type: :bool
+        },
         pin: %{
           __struct__: Protox.Field,
           extender: nil,
